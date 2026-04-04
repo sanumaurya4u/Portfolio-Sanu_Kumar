@@ -162,6 +162,7 @@ async function handleGetContacts() {
     const messages = await db.collection('contact_messages')
       .find({})
       .sort({ created_at: -1 })
+      .limit(100)
       .toArray();
     
     const sanitized = messages.map(({ _id, ...rest }) => rest);
