@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,21 +10,112 @@ import {
   Github, Linkedin, Mail, Menu, X, Moon, Sun, ExternalLink, Star, GitFork,
   Download, Send, MapPin, GraduationCap, Code2, ChevronDown, ArrowUp,
   Briefcase, Heart, Globe, Terminal, Cpu, Database, Layout, Smartphone,
-  FileCode, Coffee, Loader2
+  FileCode, Coffee, Loader2, Sparkles, Zap, BookOpen
 } from 'lucide-react';
 
 const GITHUB_USERNAME = 'sanumaurya4u';
 const LINKEDIN_URL = 'https://www.linkedin.com/in/sanu-kumar-91619b233';
 const RESUME_URL = 'https://customer-assets.emergentagent.com/job_cb536e5c-c6ff-4e60-9732-e9af9a31c485/artifacts/nhp0mich_Profile%20%284%29.pdf';
-const HERO_BG = 'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxjb2RpbmclMjBzZXR1cHxlbnwwfHx8Ymx1ZXwxNzc1MzMwNzYxfDA&ixlib=rb-4.1.0&q=85';
+const PROFILE_IMAGE = 'https://customer-assets.emergentagent.com/job_cse-portfolio-39/artifacts/609ekhyr_IMG_20260130_222658.jpg';
+
+// ===================== SCROLL REVEAL HOOK =====================
+function useReveal() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    const el = ref.current;
+    if (el) {
+      const reveals = el.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+      reveals.forEach((r) => observer.observe(r));
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
+
+// ===================== TYPEWRITER HOOK =====================
+function useTypewriter(texts, speed = 80, pause = 2000) {
+  const [displayText, setDisplayText] = useState('');
+  const [textIndex, setTextIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = texts[textIndex];
+    let timer;
+
+    if (!isDeleting && charIndex < current.length) {
+      timer = setTimeout(() => setCharIndex(charIndex + 1), speed);
+    } else if (!isDeleting && charIndex === current.length) {
+      timer = setTimeout(() => setIsDeleting(true), pause);
+    } else if (isDeleting && charIndex > 0) {
+      timer = setTimeout(() => setCharIndex(charIndex - 1), speed / 2);
+    } else if (isDeleting && charIndex === 0) {
+      setIsDeleting(false);
+      setTextIndex((textIndex + 1) % texts.length);
+    }
+
+    setDisplayText(current.substring(0, charIndex));
+    return () => clearTimeout(timer);
+  }, [charIndex, isDeleting, textIndex, texts, speed, pause]);
+
+  return displayText;
+}
+
+// ===================== PARTICLE BACKGROUND =====================
+function ParticleField() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(20)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full bg-primary/10 animate-float"
+          style={{
+            width: `${Math.random() * 4 + 2}px`,
+            height: `${Math.random() * 4 + 2}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 6}s`,
+            animationDuration: `${Math.random() * 4 + 4}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 // ===================== NAVBAR =====================
 function Navbar({ darkMode, setDarkMode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+
+      const sections = ['home', 'about', 'skills', 'projects', 'resume', 'contact'];
+      for (const section of sections.reverse()) {
+        const el = document.getElementById(section);
+        if (el && window.scrollY >= el.offsetTop - 200) {
+          setActiveSection(section);
+          break;
+        }
+      }
+    };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -39,30 +130,40 @@ function Navbar({ darkMode, setDarkMode }) {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
       scrolled
-        ? 'bg-background/80 backdrop-blur-xl border-b border-border shadow-lg'
+        ? 'glass-strong shadow-lg shadow-black/5'
         : 'bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <a href="#home" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+          <a href="#home" className="text-xl font-bold gradient-text-blue tracking-tight">
             &lt;SK /&gt;
           </a>
 
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
-              >
-                {link.name}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = activeSection === link.href.slice(1);
+              return (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 rounded-lg ${
+                    isActive
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {link.name}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
+                  )}
+                </a>
+              );
+            })}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="ml-2 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="ml-3 p-2 rounded-xl glass hover:bg-primary/10 transition-all duration-300 text-muted-foreground hover:text-primary"
             >
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -71,13 +172,13 @@ function Navbar({ darkMode, setDarkMode }) {
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-full hover:bg-muted transition-colors"
+              className="p-2 rounded-xl glass transition-colors"
             >
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 rounded-md hover:bg-muted transition-colors"
+              className="p-2 rounded-xl glass transition-colors"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -85,13 +186,13 @@ function Navbar({ darkMode, setDarkMode }) {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden pb-4 animate-fade-in">
+          <div className="md:hidden pb-4 animate-fade-in glass-strong rounded-2xl mt-2 p-2">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                className="block px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 rounded-xl transition-colors"
               >
                 {link.name}
               </a>
@@ -105,185 +206,229 @@ function Navbar({ darkMode, setDarkMode }) {
 
 // ===================== HERO SECTION =====================
 function HeroSection() {
+  const typedText = useTypewriter([
+    'Full Stack Web Developer',
+    'DSA Enthusiast',
+    'Freelancer',
+    'UGC Creator',
+  ], 80, 2000);
+
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <img src={HERO_BG} alt="" className="w-full h-full object-cover opacity-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
-      </div>
+      {/* Mesh gradient background */}
+      <div className="absolute inset-0 mesh-gradient-1" />
+      <ParticleField />
 
-      {/* Animated orbs */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float animation-delay-200" />
+      {/* Decorative orbs */}
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-indigo-500/8 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500/8 rounded-full blur-3xl animate-float animation-delay-400" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/3 rounded-full blur-3xl" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Profile Avatar */}
-        <div className="mb-8 animate-fade-in-up">
-          <div className="relative inline-block">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1 animate-pulse-glow">
-              <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                <span className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                  SK
-                </span>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
+          {/* Left: Text Content */}
+          <div className="flex-1 text-center lg:text-left order-2 lg:order-1">
+            <div className="animate-fade-in-up">
+              <Badge className="mb-6 px-4 py-1.5 text-xs font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
+                <Sparkles className="w-3 h-3 mr-1.5" /> Available for Opportunities
+              </Badge>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 tracking-tight animate-fade-in-up animation-delay-100">
+              Hi, I'm{' '}
+              <span className="gradient-text">Sanu Kumar</span>
+            </h1>
+
+            <div className="h-10 sm:h-12 mb-6 animate-fade-in-up animation-delay-200">
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-light">
+                <span className="text-foreground font-medium">{typedText}</span>
+                <span className="inline-block w-0.5 h-6 bg-primary ml-1 animate-pulse" />
+              </p>
+            </div>
+
+            <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed animate-fade-in-up animation-delay-300">
+              B.Tech CSE '28 at UIET, Maharshi Dayanand University, Rohtak.
+              Passionate about building elegant solutions through code.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 animate-fade-in-up animation-delay-400">
+              <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl px-8 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5">
+                <a href="#projects"><Zap className="w-4 h-4 mr-2" /> View Projects</a>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="rounded-xl px-8 border-border/50 glass hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 hover:-translate-y-0.5">
+                <a href="#contact"><Mail className="w-4 h-4 mr-2" /> Get In Touch</a>
+              </Button>
+            </div>
+
+            {/* Social Links */}
+            <div className="flex items-center justify-center lg:justify-start gap-3 mt-8 animate-fade-in-up animation-delay-600">
+              {[
+                { icon: <Github className="w-5 h-5" />, href: `https://github.com/${GITHUB_USERNAME}`, label: 'GitHub' },
+                { icon: <Linkedin className="w-5 h-5" />, href: LINKEDIN_URL, label: 'LinkedIn' },
+                { icon: <Mail className="w-5 h-5" />, href: '#contact', label: 'Email' },
+              ].map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target={link.href.startsWith('http') ? '_blank' : undefined}
+                  rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className="group p-3 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10"
+                  aria-label={link.label}
+                >
+                  {link.icon}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Profile Image */}
+          <div className="flex-shrink-0 order-1 lg:order-2 animate-fade-in-up animation-delay-200">
+            <div className="relative">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 blur-2xl opacity-20 animate-pulse-glow scale-110" />
+
+              {/* Rotating gradient border */}
+              <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-1 animate-gradient">
+                  <div className="w-full h-full rounded-full bg-background p-1">
+                    <img
+                      src={PROFILE_IMAGE}
+                      alt="Sanu Kumar"
+                      className="w-full h-full rounded-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+
+                {/* Floating badges around image */}
+                <div className="absolute -top-2 -right-2 p-2 rounded-xl glass-strong shadow-lg animate-float animation-delay-200">
+                  <Code2 className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div className="absolute -bottom-2 -left-2 p-2 rounded-xl glass-strong shadow-lg animate-float animation-delay-600">
+                  <Terminal className="w-5 h-5 text-purple-400" />
+                </div>
+                <div className="absolute top-1/2 -right-6 p-2 rounded-xl glass-strong shadow-lg animate-float animation-delay-400">
+                  <Sparkles className="w-5 h-5 text-pink-400" />
+                </div>
               </div>
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 rounded-full border-4 border-background" />
           </div>
         </div>
 
-        {/* Text Content */}
-        <div className="animate-fade-in-up animation-delay-200">
-          <Badge variant="secondary" className="mb-4 px-4 py-1 text-sm">
-            <Coffee className="w-3 h-3 mr-1" /> Available for Freelance
-          </Badge>
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold mb-4 tracking-tight">
-            Hi, I'm{' '}
-            <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              Sanu Kumar
-            </span>
-          </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-2 font-light">
-            Aspiring Software Developer & Full Stack Web Developer
-          </p>
-          <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-2xl mx-auto">
-            B.Tech CSE '28 at UIET, Maharshi Dayanand University, Rohtak
-          </p>
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-4 animate-fade-in-up animation-delay-400">
-          <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25">
-            <a href="#projects">View Projects</a>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="border-border hover:bg-muted">
-            <a href="#contact">Get In Touch</a>
-          </Button>
-        </div>
-
-        {/* Social Links */}
-        <div className="flex items-center justify-center gap-4 mt-8 animate-fade-in-up animation-delay-600">
-          <a
-            href={`https://github.com/${GITHUB_USERNAME}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all hover:scale-110 hover:shadow-lg"
-          >
-            <Github className="w-5 h-5" />
-          </a>
-          <a
-            href={LINKEDIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-3 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all hover:scale-110 hover:shadow-lg"
-          >
-            <Linkedin className="w-5 h-5" />
-          </a>
-          <a
-            href="#contact"
-            className="p-3 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all hover:scale-110 hover:shadow-lg"
-          >
-            <Mail className="w-5 h-5" />
-          </a>
-        </div>
-
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <ChevronDown className="w-6 h-6 text-muted-foreground" />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-fade-in animation-delay-1000">
+          <span className="text-xs text-muted-foreground tracking-widest uppercase">Scroll</span>
+          <ChevronDown className="w-5 h-5 text-muted-foreground animate-bounce" />
         </div>
       </div>
     </section>
   );
 }
 
+// ===================== SECTION HEADING =====================
+function SectionHeading({ badge, icon, title, subtitle }) {
+  return (
+    <div className="text-center mb-16 reveal">
+      <Badge variant="outline" className="mb-4 px-4 py-1.5 text-xs font-medium border-primary/20 bg-primary/5">
+        {icon} <span className="ml-1.5">{badge}</span>
+      </Badge>
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">{title}</h2>
+      {subtitle && (
+        <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">{subtitle}</p>
+      )}
+    </div>
+  );
+}
+
 // ===================== ABOUT SECTION =====================
 function AboutSection() {
-  return (
-    <section id="about" className="py-20 sm:py-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4">
-            <Code2 className="w-3 h-3 mr-1" /> About Me
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold">Get to Know Me</h2>
-        </div>
+  const sectionRef = useReveal();
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+  return (
+    <section id="about" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <div className="absolute inset-0 mesh-gradient-2" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="About Me"
+          icon={<BookOpen className="w-3.5 h-3.5" />}
+          title="Get to Know Me"
+        />
+
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start">
           {/* Bio */}
-          <div className="space-y-6">
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Hello! I'm <span className="text-foreground font-semibold">Sanu Kumar</span>, a technophile
+          <div className="space-y-6 reveal-left">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+              Hello! I'm <span className="text-foreground font-semibold gradient-text">Sanu Kumar</span>, a technophile
               pursuing CS Honours from UIET, Maharshi Dayanand University, Rohtak. I'm currently building
               a strong foundation in programming with C and Python, and actively exploring the world of
               web & app development.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
               I'm deeply interested in solving real-world problems through efficient code and continuously
               improving my skills in DSA and software engineering. Whether it's debugging code or designing
               user-friendly websites, I enjoy the process of learning and growing with each project.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="secondary" className="px-3 py-1">
-                <Terminal className="w-3 h-3 mr-1" /> Full Stack Developer
-              </Badge>
-              <Badge variant="secondary" className="px-3 py-1">
-                <Code2 className="w-3 h-3 mr-1" /> DSA Enthusiast
-              </Badge>
-              <Badge variant="secondary" className="px-3 py-1">
-                <Briefcase className="w-3 h-3 mr-1" /> Freelancer
-              </Badge>
-              <Badge variant="secondary" className="px-3 py-1">
-                <Globe className="w-3 h-3 mr-1" /> UGC Creator
-              </Badge>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {[
+                { icon: <Terminal className="w-3 h-3" />, text: 'Full Stack Developer' },
+                { icon: <Code2 className="w-3 h-3" />, text: 'DSA Enthusiast' },
+                { icon: <Briefcase className="w-3 h-3" />, text: 'Freelancer' },
+                { icon: <Globe className="w-3 h-3" />, text: 'UGC Creator' },
+              ].map((tag) => (
+                <Badge key={tag.text} className="px-3 py-1.5 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 transition-colors">
+                  {tag.icon} <span className="ml-1">{tag.text}</span>
+                </Badge>
+              ))}
             </div>
           </div>
 
-          {/* Education Card */}
-          <div className="space-y-6">
-            <Card className="bg-card/50 backdrop-blur border-border">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-                    <GraduationCap className="w-6 h-6 text-blue-500" />
+          {/* Info Cards */}
+          <div className="space-y-4 reveal-right">
+            {[
+              {
+                icon: <GraduationCap className="w-6 h-6" />,
+                iconColor: 'text-indigo-400',
+                iconBg: 'from-indigo-500/15 to-purple-500/15 border-indigo-500/20',
+                title: 'Bachelor of Technology (B.Tech)',
+                subtitle: 'Computer Science Engineering',
+                subtitleColor: 'text-indigo-400',
+                details: ['Maharshi Dayanand University, Rohtak', 'UIET - University Institute of Engineering & Technology'],
+                badge: 'July 2024 - May 2028'
+              },
+              {
+                icon: <MapPin className="w-6 h-6" />,
+                iconColor: 'text-emerald-400',
+                iconBg: 'from-emerald-500/15 to-teal-500/15 border-emerald-500/20',
+                title: 'Location',
+                details: ['Rohtak, Haryana, India']
+              },
+              {
+                icon: <FileCode className="w-6 h-6" />,
+                iconColor: 'text-amber-400',
+                iconBg: 'from-amber-500/15 to-orange-500/15 border-amber-500/20',
+                title: 'Certification',
+                details: ['Certificate of Completion - React & Redux']
+              },
+            ].map((card, i) => (
+              <Card key={i} className="glass hover-card-lift border-border/50 overflow-hidden group">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${card.iconBg} border ${card.iconColor} flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      {card.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold">{card.title}</h3>
+                      {card.subtitle && <p className={`font-medium text-sm ${card.subtitleColor}`}>{card.subtitle}</p>}
+                      {card.details?.map((d, j) => (
+                        <p key={j} className="text-sm text-muted-foreground mt-0.5">{d}</p>
+                      ))}
+                      {card.badge && <Badge variant="outline" className="mt-2 text-xs border-primary/20">{card.badge}</Badge>}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Bachelor of Technology (B.Tech)</h3>
-                    <p className="text-blue-500 font-medium">Computer Science Engineering</p>
-                    <p className="text-muted-foreground mt-1">Maharshi Dayanand University, Rohtak</p>
-                    <p className="text-sm text-muted-foreground">UIET - University Institute of Engineering & Technology</p>
-                    <Badge variant="outline" className="mt-2">July 2024 - May 2028</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur border-border">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/10 to-teal-500/10 border border-green-500/20">
-                    <MapPin className="w-6 h-6 text-green-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Location</h3>
-                    <p className="text-muted-foreground">Rohtak, Haryana, India</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur border-border">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20">
-                    <FileCode className="w-6 h-6 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">Certification</h3>
-                    <p className="text-muted-foreground">Certificate of Completion - React & Redux</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
@@ -292,62 +437,66 @@ function AboutSection() {
 }
 
 // ===================== SKILLS SECTION =====================
-const skills = {
+const skillsData = {
   'Programming Languages': [
-    { name: 'C++', icon: <Terminal className="w-5 h-5" />, color: 'from-blue-500 to-blue-700' },
-    { name: 'Java', icon: <Coffee className="w-5 h-5" />, color: 'from-red-500 to-orange-500' },
-    { name: 'Python', icon: <Code2 className="w-5 h-5" />, color: 'from-yellow-500 to-green-500' },
-    { name: 'JavaScript', icon: <FileCode className="w-5 h-5" />, color: 'from-yellow-400 to-yellow-600' },
-    { name: 'C', icon: <Terminal className="w-5 h-5" />, color: 'from-gray-500 to-gray-700' },
+    { name: 'C++', icon: <Terminal className="w-5 h-5" />, gradient: 'from-blue-500 to-blue-700' },
+    { name: 'Java', icon: <Coffee className="w-5 h-5" />, gradient: 'from-red-500 to-orange-500' },
+    { name: 'Python', icon: <Code2 className="w-5 h-5" />, gradient: 'from-yellow-500 to-green-500' },
+    { name: 'JavaScript', icon: <FileCode className="w-5 h-5" />, gradient: 'from-yellow-400 to-yellow-600' },
+    { name: 'C', icon: <Terminal className="w-5 h-5" />, gradient: 'from-slate-500 to-slate-700' },
   ],
   'Web Technologies': [
-    { name: 'HTML5', icon: <Layout className="w-5 h-5" />, color: 'from-orange-500 to-red-500' },
-    { name: 'CSS3', icon: <Layout className="w-5 h-5" />, color: 'from-blue-400 to-blue-600' },
-    { name: 'React', icon: <Code2 className="w-5 h-5" />, color: 'from-cyan-400 to-blue-500' },
-    { name: 'Next.js', icon: <Globe className="w-5 h-5" />, color: 'from-gray-600 to-gray-900' },
-    { name: 'Tailwind CSS', icon: <Layout className="w-5 h-5" />, color: 'from-teal-400 to-cyan-500' },
+    { name: 'HTML5', icon: <Layout className="w-5 h-5" />, gradient: 'from-orange-500 to-red-500' },
+    { name: 'CSS3', icon: <Layout className="w-5 h-5" />, gradient: 'from-blue-400 to-blue-600' },
+    { name: 'React', icon: <Code2 className="w-5 h-5" />, gradient: 'from-cyan-400 to-blue-500' },
+    { name: 'Next.js', icon: <Globe className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800' },
+    { name: 'Tailwind', icon: <Layout className="w-5 h-5" />, gradient: 'from-teal-400 to-cyan-500' },
   ],
   'Tools & Others': [
-    { name: 'Git & GitHub', icon: <Github className="w-5 h-5" />, color: 'from-gray-600 to-gray-800' },
-    { name: 'MongoDB', icon: <Database className="w-5 h-5" />, color: 'from-green-500 to-green-700' },
-    { name: 'Node.js', icon: <Cpu className="w-5 h-5" />, color: 'from-green-400 to-green-600' },
-    { name: 'DSA', icon: <Terminal className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
-    { name: 'Responsive Design', icon: <Smartphone className="w-5 h-5" />, color: 'from-pink-400 to-rose-500' },
+    { name: 'Git & GitHub', icon: <Github className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800' },
+    { name: 'MongoDB', icon: <Database className="w-5 h-5" />, gradient: 'from-green-500 to-green-700' },
+    { name: 'Node.js', icon: <Cpu className="w-5 h-5" />, gradient: 'from-green-400 to-green-600' },
+    { name: 'DSA', icon: <Terminal className="w-5 h-5" />, gradient: 'from-purple-500 to-pink-500' },
+    { name: 'Responsive', icon: <Smartphone className="w-5 h-5" />, gradient: 'from-pink-400 to-rose-500' },
   ],
 };
 
 function SkillsSection() {
-  return (
-    <section id="skills" className="py-20 sm:py-28 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4">
-            <Cpu className="w-3 h-3 mr-1" /> My Skills
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold">Technologies I Work With</h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
-            Constantly learning and improving my skill set to build better solutions
-          </p>
-        </div>
+  const sectionRef = useReveal();
 
-        <div className="space-y-12">
-          {Object.entries(skills).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+  return (
+    <section id="skills" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <div className="absolute inset-0 mesh-gradient-1 opacity-50" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="My Skills"
+          icon={<Cpu className="w-3.5 h-3.5" />}
+          title="Technologies I Work With"
+          subtitle="Constantly learning and pushing boundaries to build better solutions"
+        />
+
+        <div className="space-y-14">
+          {Object.entries(skillsData).map(([category, items], catIndex) => (
+            <div key={category} className="reveal" style={{ transitionDelay: `${catIndex * 150}ms` }}>
+              <h3 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-3">
+                <div className="w-8 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
                 {category}
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                {items.map((skill) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
+                {items.map((skill, i) => (
                   <Card
                     key={skill.name}
-                    className="group bg-card/50 backdrop-blur border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 cursor-default"
+                    className="group glass hover-card-lift border-border/50 cursor-default overflow-hidden"
+                    style={{ transitionDelay: `${i * 50}ms` }}
                   >
-                    <CardContent className="p-4 text-center">
-                      <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${skill.color} bg-opacity-10 mb-3 text-white group-hover:scale-110 transition-transform`}>
+                    <CardContent className="p-4 sm:p-5 text-center relative">
+                      {/* Hover gradient overlay */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${skill.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+                      <div className={`relative inline-flex p-3 rounded-2xl bg-gradient-to-br ${skill.gradient} mb-3 text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
                         {skill.icon}
                       </div>
-                      <p className="text-sm font-medium">{skill.name}</p>
+                      <p className="relative text-sm font-medium">{skill.name}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -367,26 +516,20 @@ function ProjectsSection() {
   const [error, setError] = useState(null);
   const [selectedLang, setSelectedLang] = useState('All');
   const [languages, setLanguages] = useState(['All']);
+  const sectionRef = useReveal();
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Try our API proxy first, fallback to direct GitHub API
       let repos_data = [];
       try {
         const res = await fetch(`/api/github?username=${GITHUB_USERNAME}`);
         const data = await res.json();
-        if (data.success) {
-          repos_data = data.repos;
-        } else {
-          throw new Error('API proxy failed');
-        }
+        if (data.success) repos_data = data.repos;
+        else throw new Error('API proxy failed');
       } catch {
-        // Fallback: call GitHub API directly from client
         const res = await fetch(
           `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=30`,
           { headers: { 'Accept': 'application/vnd.github.v3+json' } }
@@ -394,20 +537,14 @@ function ProjectsSection() {
         if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
         const raw = await res.json();
         repos_data = raw.map(repo => ({
-          id: repo.id.toString(),
-          name: repo.name,
+          id: repo.id.toString(), name: repo.name,
           description: repo.description || 'No description available',
-          language: repo.language || 'Unknown',
-          html_url: repo.html_url,
-          homepage: repo.homepage || null,
-          stars: repo.stargazers_count,
-          forks: repo.forks_count,
-          updated_at: repo.updated_at,
-          topics: repo.topics || [],
-          fork: repo.fork
+          language: repo.language || 'Unknown', html_url: repo.html_url,
+          homepage: repo.homepage || null, stars: repo.stargazers_count,
+          forks: repo.forks_count, updated_at: repo.updated_at,
+          topics: repo.topics || [], fork: repo.fork
         }));
       }
-
       const nonForked = repos_data.filter(r => !r.fork);
       setRepos(nonForked);
       const langs = ['All', ...new Set(nonForked.map(r => r.language).filter(l => l && l !== 'Unknown'))];
@@ -419,46 +556,37 @@ function ProjectsSection() {
     }
   };
 
-  const filteredRepos = selectedLang === 'All'
-    ? repos
-    : repos.filter(r => r.language === selectedLang);
+  const filteredRepos = selectedLang === 'All' ? repos : repos.filter(r => r.language === selectedLang);
 
   const langColors = {
-    JavaScript: '#f1e05a',
-    Python: '#3572A5',
-    Java: '#b07219',
-    'C++': '#f34b7d',
-    C: '#555555',
-    HTML: '#e34c26',
-    CSS: '#563d7c',
-    TypeScript: '#3178c6',
-    Unknown: '#8b8b8b',
+    JavaScript: '#f1e05a', Python: '#3572A5', Java: '#b07219',
+    'C++': '#f34b7d', C: '#555555', HTML: '#e34c26', CSS: '#563d7c',
+    TypeScript: '#3178c6', PowerShell: '#012456', Unknown: '#8b8b8b',
   };
 
   return (
-    <section id="projects" className="py-20 sm:py-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4">
-            <Github className="w-3 h-3 mr-1" /> My Projects
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold">Featured Projects</h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
-            A collection of my work fetched directly from GitHub
-          </p>
-        </div>
+    <section id="projects" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="My Projects"
+          icon={<Github className="w-3.5 h-3.5" />}
+          title="Featured Projects"
+          subtitle="A collection of my work fetched directly from GitHub"
+        />
 
         {/* Language Filter */}
         {!loading && !error && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-12 reveal">
             {languages.map((lang) => (
               <button
                 key={lang}
                 onClick={() => setSelectedLang(lang)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   selectedLang === lang
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
+                    : 'glass text-muted-foreground hover:text-foreground hover:bg-primary/5'
                 }`}
               >
                 {lang !== 'All' && (
@@ -473,39 +601,41 @@ function ProjectsSection() {
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">Fetching projects from GitHub...</p>
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+              <Github className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            </div>
+            <p className="text-muted-foreground mt-4">Fetching projects from GitHub...</p>
           </div>
         )}
 
-        {/* Error State */}
         {error && (
-          <div className="text-center py-20">
+          <div className="text-center py-20 reveal">
             <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={fetchProjects} variant="outline">Try Again</Button>
+            <Button onClick={fetchProjects} variant="outline" className="rounded-xl">Try Again</Button>
           </div>
         )}
 
-        {/* Projects Grid */}
         {!loading && !error && (
           <>
             {filteredRepos.length === 0 ? (
               <p className="text-center text-muted-foreground py-10">No projects found for this filter.</p>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredRepos.map((repo, index) => (
                   <Card
                     key={repo.id}
-                    className="group bg-card/50 backdrop-blur border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 flex flex-col"
-                    style={{ animationDelay: `${index * 100}ms` }}
+                    className="group glass hover-card-lift border-border/50 flex flex-col overflow-hidden reveal-scale"
+                    style={{ transitionDelay: `${index * 100}ms` }}
                   >
+                    {/* Top gradient accent */}
+                    <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg truncate group-hover:text-primary transition-colors">
+                          <CardTitle className="text-lg truncate group-hover:gradient-text transition-all duration-300">
                             {repo.name}
                           </CardTitle>
                         </div>
@@ -513,39 +643,37 @@ function ProjectsSection() {
                           href={repo.html_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-lg hover:bg-muted transition-colors flex-shrink-0"
+                          className="p-2 rounded-xl hover:bg-primary/10 transition-all duration-300 flex-shrink-0 text-muted-foreground hover:text-primary"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       </div>
-                      <CardDescription className="line-clamp-2 mt-1">
+                      <CardDescription className="line-clamp-2 mt-1 text-sm">
                         {repo.description}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="mt-auto pt-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {repo.language && repo.language !== 'Unknown' && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <span
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: langColors[repo.language] || '#8b8b8b' }}
-                              />
-                              {repo.language}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Star className="w-3 h-3" /> {repo.stars}
+                      <div className="flex items-center gap-3">
+                        {repo.language && repo.language !== 'Unknown' && (
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <span
+                              className="w-3 h-3 rounded-full ring-2 ring-offset-1 ring-offset-background"
+                              style={{ backgroundColor: langColors[repo.language] || '#8b8b8b', ringColor: langColors[repo.language] || '#8b8b8b' }}
+                            />
+                            {repo.language}
                           </span>
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <GitFork className="w-3 h-3" /> {repo.forks}
-                          </span>
-                        </div>
+                        )}
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Star className="w-3 h-3" /> {repo.stars}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <GitFork className="w-3 h-3" /> {repo.forks}
+                        </span>
                       </div>
                       {repo.topics && repo.topics.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
+                        <div className="flex flex-wrap gap-1.5 mt-3">
                           {repo.topics.slice(0, 3).map((topic) => (
-                            <Badge key={topic} variant="secondary" className="text-xs px-2 py-0">
+                            <Badge key={topic} className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/20">
                               {topic}
                             </Badge>
                           ))}
@@ -557,14 +685,9 @@ function ProjectsSection() {
               </div>
             )}
 
-            {/* View more on GitHub */}
-            <div className="text-center mt-10">
-              <Button asChild variant="outline" size="lg">
-                <a
-                  href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+            <div className="text-center mt-12 reveal">
+              <Button asChild variant="outline" size="lg" className="rounded-xl glass border-border/50 hover:bg-primary/5 hover:border-primary/30">
+                <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
                   <Github className="w-4 h-4 mr-2" /> View All on GitHub
                 </a>
               </Button>
@@ -578,39 +701,41 @@ function ProjectsSection() {
 
 // ===================== RESUME SECTION =====================
 function ResumeSection() {
-  return (
-    <section id="resume" className="py-20 sm:py-28 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <Badge variant="outline" className="mb-4">
-            <FileCode className="w-3 h-3 mr-1" /> Resume
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">My Resume</h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Download my resume to learn more about my education, skills, and experiences
-          </p>
+  const sectionRef = useReveal();
 
-          <Card className="max-w-lg mx-auto bg-card/50 backdrop-blur border-border">
-            <CardContent className="p-8">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 flex items-center justify-center">
-                <FileCode className="w-10 h-10 text-blue-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Sanu Kumar - Resume</h3>
-              <p className="text-muted-foreground text-sm mb-6">
-                B.Tech CSE | Full Stack Developer | Freelancer
-              </p>
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 w-full sm:w-auto"
-              >
-                <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" download>
-                  <Download className="w-4 h-4 mr-2" /> Download Resume (PDF)
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+  return (
+    <section id="resume" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <div className="absolute inset-0 mesh-gradient-1 opacity-50" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="Resume"
+          icon={<FileCode className="w-3.5 h-3.5" />}
+          title="My Resume"
+          subtitle="Download my resume to learn more about my education, skills, and experiences"
+        />
+
+        <Card className="max-w-lg mx-auto glass border-border/50 overflow-hidden reveal-scale">
+          <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <CardContent className="p-8 sm:p-10 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/20 flex items-center justify-center">
+              <FileCode className="w-10 h-10 text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Sanu Kumar</h3>
+            <p className="text-muted-foreground text-sm mb-6">
+              B.Tech CSE | Full Stack Developer | Freelancer
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl w-full sm:w-auto px-8 transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5"
+            >
+              <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" download>
+                <Download className="w-4 h-4 mr-2" /> Download Resume (PDF)
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </section>
   );
@@ -619,14 +744,14 @@ function ResumeSection() {
 // ===================== CONTACT SECTION =====================
 function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState(null); // 'sending' | 'success' | 'error'
+  const [status, setStatus] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const sectionRef = useReveal();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('sending');
     setErrorMsg('');
-
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
@@ -634,7 +759,6 @@ function ContactSection() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-
       if (data.success) {
         setStatus('success');
         setForm({ name: '', email: '', message: '' });
@@ -650,123 +774,100 @@ function ContactSection() {
   };
 
   return (
-    <section id="contact" className="py-20 sm:py-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4">
-            <Mail className="w-3 h-3 mr-1" /> Get In Touch
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold">Contact Me</h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
-            Have a project in mind or want to collaborate? Feel free to reach out!
-          </p>
-        </div>
+    <section id="contact" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
 
-        <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="Get In Touch"
+          icon={<Mail className="w-3.5 h-3.5" />}
+          title="Contact Me"
+          subtitle="Have a project in mind or want to collaborate? Feel free to reach out!"
+        />
+
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto">
           {/* Contact Info */}
-          <div className="space-y-6">
-            <h3 className="text-2xl font-semibold">Let's work together</h3>
-            <p className="text-muted-foreground">
+          <div className="space-y-6 reveal-left">
+            <h3 className="text-2xl sm:text-3xl font-bold">
+              Let's work{' '}
+              <span className="gradient-text">together</span>
+            </h3>
+            <p className="text-muted-foreground leading-relaxed">
               I'm always open to discussing new projects, creative ideas or opportunities to be part of your vision.
             </p>
 
-            <div className="space-y-4">
-              <Card className="bg-card/50 backdrop-blur border-border">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-                    <MapPin className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Location</p>
-                    <p className="font-medium">Rohtak, Haryana, India</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card/50 backdrop-blur border-border">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-                    <Github className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">GitHub</p>
-                    <a
-                      href={`https://github.com/${GITHUB_USERNAME}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium hover:text-primary transition-colors"
-                    >
-                      github.com/{GITHUB_USERNAME}
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card/50 backdrop-blur border-border">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-                    <Linkedin className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">LinkedIn</p>
-                    <a
-                      href={LINKEDIN_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium hover:text-primary transition-colors"
-                    >
-                      Sanu Kumar
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="space-y-3">
+              {[
+                { icon: <MapPin className="w-5 h-5 text-indigo-400" />, bg: 'from-indigo-500/15 to-purple-500/15 border-indigo-500/20', label: 'Location', value: 'Rohtak, Haryana, India' },
+                { icon: <Github className="w-5 h-5 text-purple-400" />, bg: 'from-purple-500/15 to-pink-500/15 border-purple-500/20', label: 'GitHub', value: `github.com/${GITHUB_USERNAME}`, href: `https://github.com/${GITHUB_USERNAME}` },
+                { icon: <Linkedin className="w-5 h-5 text-blue-400" />, bg: 'from-blue-500/15 to-indigo-500/15 border-blue-500/20', label: 'LinkedIn', value: 'Sanu Kumar', href: LINKEDIN_URL },
+              ].map((item) => (
+                <Card key={item.label} className="glass hover-card-lift border-border/50 group">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${item.bg} border flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                      {item.href ? (
+                        <a href={item.href} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary transition-colors">
+                          {item.value}
+                        </a>
+                      ) : (
+                        <p className="font-medium text-sm">{item.value}</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
 
           {/* Contact Form */}
-          <Card className="bg-card/50 backdrop-blur border-border">
+          <Card className="glass border-border/50 overflow-hidden reveal-right">
+            <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
             <CardContent className="p-6 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Name</label>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Name</label>
                   <Input
                     placeholder="Your name"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     required
-                    className="bg-background"
+                    className="bg-background/50 rounded-xl border-border/50 focus:border-primary/50 transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Email</label>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Email</label>
                   <Input
                     type="email"
                     placeholder="your@email.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     required
-                    className="bg-background"
+                    className="bg-background/50 rounded-xl border-border/50 focus:border-primary/50 transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Message</label>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Message</label>
                   <textarea
                     placeholder="Tell me about your project..."
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     required
                     rows={5}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                    className="w-full rounded-xl border border-border/50 bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none transition-colors focus:border-primary/50"
                   />
                 </div>
 
                 {status === 'success' && (
-                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-500 text-sm">
-                    Message sent successfully! I'll get back to you soon.
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Message sent successfully! I'll get back to you soon.
                   </div>
                 )}
                 {status === 'error' && (
-                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                     {errorMsg}
                   </div>
                 )}
@@ -775,7 +876,7 @@ function ContactSection() {
                   type="submit"
                   disabled={status === 'sending'}
                   size="lg"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25"
+                  className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5"
                 >
                   {status === 'sending' ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
@@ -795,50 +896,45 @@ function ContactSection() {
 // ===================== FOOTER =====================
 function Footer() {
   return (
-    <footer className="border-t border-border bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="border-t border-border/50 relative overflow-hidden">
+      <div className="absolute inset-0 mesh-gradient-1 opacity-30" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <a href="#home" className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+          <div className="text-center md:text-left">
+            <a href="#home" className="text-xl font-bold gradient-text-blue tracking-tight">
               &lt;SK /&gt;
             </a>
             <p className="text-sm text-muted-foreground mt-1">Aspiring Software Developer</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <a
-              href={`https://github.com/${GITHUB_USERNAME}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-            <a
-              href={LINKEDIN_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-            >
-              <Linkedin className="w-5 h-5" />
-            </a>
-            <a
-              href="#contact"
-              className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-            >
-              <Mail className="w-5 h-5" />
-            </a>
+          <div className="flex items-center gap-3">
+            {[
+              { icon: <Github className="w-5 h-5" />, href: `https://github.com/${GITHUB_USERNAME}` },
+              { icon: <Linkedin className="w-5 h-5" />, href: LINKEDIN_URL },
+              { icon: <Mail className="w-5 h-5" />, href: '#contact' },
+            ].map((link, i) => (
+              <a
+                key={i}
+                href={link.href}
+                target={link.href.startsWith('http') ? '_blank' : undefined}
+                rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                className="p-2.5 rounded-xl glass text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 hover:scale-110"
+              >
+                {link.icon}
+              </a>
+            ))}
           </div>
         </div>
 
-        <Separator className="my-6" />
+        <Separator className="my-6 opacity-50" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Sanu Kumar. All rights reserved.
           </p>
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            Made with <Heart className="w-3 h-3 text-red-500 fill-red-500" /> using Next.js & Tailwind CSS
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+            Made with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> using Next.js & Tailwind CSS
           </p>
         </div>
       </div>
@@ -861,7 +957,7 @@ function ScrollToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:scale-110 transition-all animate-fade-in"
+      className="fixed bottom-6 right-6 z-50 p-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/25 hover:scale-110 transition-all duration-300 animate-fade-in"
     >
       <ArrowUp className="w-5 h-5" />
     </button>
@@ -878,7 +974,7 @@ function App() {
   }, [darkMode]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
       <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
       <HeroSection />
       <AboutSection />
