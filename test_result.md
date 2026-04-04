@@ -134,6 +134,12 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED: GET /api/github?username=sanumaurya4u returns success:true with repos array containing all required fields (id, name, description, language, html_url, stars, forks). Found 2 repos with proper caching."
+      - working: "NA"
+        agent: "main"
+        comment: "UPGRADED: profile+repos parallel fetch, TTL cache (5min), force-refresh via ?refresh=true, source indicator (live/cache/stale_cache), richer repo data (watchers, size, created_at, pushed_at)"
+      - working: true
+        agent: "testing"
+        comment: "✅ UPGRADED API TESTED: All scenarios verified - Basic fetch returns success:true with repos array (id, name, description, language, html_url, stars, forks, watchers, size, created_at, updated_at, pushed_at, topics, fork) and profile object (avatar_url, name, public_repos, followers, following, html_url), source field (live/cache/stale_cache), cached_at timestamp. Force refresh (?refresh=true) returns source:'live'. Cache behavior working correctly. Found 2 repos with complete data structure."
 
   - task: "Contact form submission"
     implemented: true
@@ -196,3 +202,5 @@ agent_communication:
     message: "All backend endpoints implemented. Please test: 1) GET /api/health 2) GET /api/github?username=sanumaurya4u (repos are cached in MongoDB) 3) POST /api/contact with {name, email, message} 4) GET /api/contact. Base URL: https://cse-portfolio-39.preview.emergentagent.com"
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All 5 API endpoints tested successfully. Health check working, GitHub repos API with caching functional (2 repos found), contact form submission with proper validation working, contact messages retrieval working, API root endpoint working. All tests passed 5/5. Backend is fully functional."
+  - agent: "testing"
+    message: "✅ UPGRADED GITHUB API TESTING COMPLETE: Tested all scenarios from review request. Basic fetch (/api/github?username=sanumaurya4u) returns success:true with complete repos array (id, name, description, language, html_url, stars, forks, watchers, size, created_at, updated_at, pushed_at, topics, fork) and profile object (avatar_url, name, public_repos, followers, following, html_url), plus source field and cached_at timestamp. Force refresh (?refresh=true) correctly returns source:'live'. Cache behavior working - second call returns source:'cache'. All existing endpoints (health, contact) still working. All 7/7 tests passed."

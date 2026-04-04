@@ -42,40 +42,153 @@ def test_health_endpoint():
         print_test_result("Health Check", False, f"Request failed: {str(e)}")
         return False
 
-def test_github_endpoint():
-    """Test GET /api/github?username=sanumaurya4u endpoint"""
-    print("🔍 Testing GitHub Repos Endpoint...")
+def test_github_basic_fetch():
+    """Test GET /api/github?username=sanumaurya4u - Basic fetch scenario"""
+    print("🔍 Testing GitHub Basic Fetch...")
     try:
         response = requests.get(f"{BASE_URL}/api/github?username=sanumaurya4u", timeout=15)
         
         if response.status_code == 200:
             data = response.json()
-            if data.get("success") and "repos" in data:
-                repos = data["repos"]
-                if isinstance(repos, list) and len(repos) > 0:
-                    # Check first repo has required fields
-                    first_repo = repos[0]
-                    required_fields = ["id", "name", "description", "language", "html_url", "stars", "forks"]
-                    missing_fields = [field for field in required_fields if field not in first_repo]
-                    
-                    if not missing_fields:
-                        print_test_result("GitHub Repos", True, f"Found {len(repos)} repos with all required fields")
-                        return True
-                    else:
-                        print_test_result("GitHub Repos", False, f"Missing fields in repo data: {missing_fields}")
-                        return False
-                else:
-                    print_test_result("GitHub Repos", False, "No repos found in response")
-                    return False
-            else:
-                print_test_result("GitHub Repos", False, f"Unexpected response structure: {data}")
+            
+            # Check basic structure
+            if not data.get("success"):
+                print_test_result("GitHub Basic Fetch", False, f"success=false: {data}")
                 return False
+            
+            # Check repos array
+            if "repos" not in data:
+                print_test_result("GitHub Basic Fetch", False, "Missing 'repos' field")
+                return False
+                
+            repos = data["repos"]
+            if not isinstance(repos, list):
+                print_test_result("GitHub Basic Fetch", False, "repos is not an array")
+                return False
+            
+            if len(repos) == 0:
+                print_test_result("GitHub Basic Fetch", False, "No repos found")
+                return False
+            
+            # Check required repo fields
+            first_repo = repos[0]
+            required_repo_fields = ["id", "name", "description", "language", "html_url", "stars", "forks", "watchers", "size", "created_at", "updated_at", "pushed_at", "topics", "fork"]
+            missing_repo_fields = [field for field in required_repo_fields if field not in first_repo]
+            
+            if missing_repo_fields:
+                print_test_result("GitHub Basic Fetch", False, f"Missing repo fields: {missing_repo_fields}")
+                return False
+            
+            # Check profile object
+            if "profile" not in data:
+                print_test_result("GitHub Basic Fetch", False, "Missing 'profile' field")
+                return False
+                
+            profile = data["profile"]
+            if profile is not None:  # profile can be null
+                required_profile_fields = ["avatar_url", "name", "public_repos", "followers", "following", "html_url"]
+                missing_profile_fields = [field for field in required_profile_fields if field not in profile]
+                
+                if missing_profile_fields:
+                    print_test_result("GitHub Basic Fetch", False, f"Missing profile fields: {missing_profile_fields}")
+                    return False
+            
+            # Check source field
+            if "source" not in data:
+                print_test_result("GitHub Basic Fetch", False, "Missing 'source' field")
+                return False
+                
+            source = data["source"]
+            if source not in ["live", "cache", "stale_cache"]:
+                print_test_result("GitHub Basic Fetch", False, f"Invalid source value: {source}")
+                return False
+            
+            # Check cached_at timestamp
+            if "cached_at" not in data:
+                print_test_result("GitHub Basic Fetch", False, "Missing 'cached_at' field")
+                return False
+            
+            print_test_result("GitHub Basic Fetch", True, f"Found {len(repos)} repos, source: {source}, profile: {'present' if profile else 'null'}")
+            return True
+            
         else:
-            print_test_result("GitHub Repos", False, f"HTTP {response.status_code}: {response.text}")
+            print_test_result("GitHub Basic Fetch", False, f"HTTP {response.status_code}: {response.text}")
             return False
             
     except Exception as e:
-        print_test_result("GitHub Repos", False, f"Request failed: {str(e)}")
+        print_test_result("GitHub Basic Fetch", False, f"Request failed: {str(e)}")
+        return False
+
+def test_github_force_refresh():
+    """Test GET /api/github?username=sanumaurya4u&refresh=true - Force refresh scenario"""
+    print("🔍 Testing GitHub Force Refresh...")
+    try:
+        response = requests.get(f"{BASE_URL}/api/github?username=sanumaurya4u&refresh=true", timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if not data.get("success"):
+                print_test_result("GitHub Force Refresh", False, f"success=false: {data}")
+                return False
+            
+            # Should return source: 'live' when force refreshed
+            source = data.get("source")
+            if source != "live":
+                print_test_result("GitHub Force Refresh", False, f"Expected source='live', got '{source}'")
+                return False
+            
+            # Profile should be populated
+            profile = data.get("profile")
+            if profile is None:
+                print_test_result("GitHub Force Refresh", False, "Profile should be populated on force refresh")
+                return False
+            
+            print_test_result("GitHub Force Refresh", True, f"Force refresh successful, source: {source}")
+            return True
+            
+        else:
+            print_test_result("GitHub Force Refresh", False, f"HTTP {response.status_code}: {response.text}")
+            return False
+            
+    except Exception as e:
+        print_test_result("GitHub Force Refresh", False, f"Request failed: {str(e)}")
+        return False
+
+def test_github_cache_behavior():
+    """Test cache behavior by calling the basic endpoint twice quickly"""
+    print("🔍 Testing GitHub Cache Behavior...")
+    try:
+        # First call
+        response1 = requests.get(f"{BASE_URL}/api/github?username=sanumaurya4u", timeout=15)
+        
+        if response1.status_code != 200:
+            print_test_result("GitHub Cache Behavior", False, f"First call failed: HTTP {response1.status_code}")
+            return False
+        
+        data1 = response1.json()
+        source1 = data1.get("source")
+        
+        # Second call immediately after
+        response2 = requests.get(f"{BASE_URL}/api/github?username=sanumaurya4u", timeout=15)
+        
+        if response2.status_code != 200:
+            print_test_result("GitHub Cache Behavior", False, f"Second call failed: HTTP {response2.status_code}")
+            return False
+        
+        data2 = response2.json()
+        source2 = data2.get("source")
+        
+        # Second call should return cache if first was live or cache
+        if source1 == "live" and source2 != "cache":
+            print_test_result("GitHub Cache Behavior", False, f"Expected second call to be cached, got source1='{source1}', source2='{source2}'")
+            return False
+        
+        print_test_result("GitHub Cache Behavior", True, f"Cache behavior working: first={source1}, second={source2}")
+        return True
+        
+    except Exception as e:
+        print_test_result("GitHub Cache Behavior", False, f"Request failed: {str(e)}")
         return False
 
 def test_contact_post_endpoint():
@@ -238,7 +351,9 @@ def main():
     
     # Run all tests
     test_results.append(("Health Check", test_health_endpoint()))
-    test_results.append(("GitHub Repos", test_github_endpoint()))
+    test_results.append(("GitHub Basic Fetch", test_github_basic_fetch()))
+    test_results.append(("GitHub Force Refresh", test_github_force_refresh()))
+    test_results.append(("GitHub Cache Behavior", test_github_cache_behavior()))
     test_results.append(("Contact Form", test_contact_post_endpoint()))
     test_results.append(("Get Contact Messages", test_contact_get_endpoint()))
     test_results.append(("API Root", test_api_root()))

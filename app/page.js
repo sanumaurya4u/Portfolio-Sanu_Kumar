@@ -10,7 +10,8 @@ import {
   Github, Linkedin, Mail, Menu, X, Moon, Sun, ExternalLink, Star, GitFork,
   Download, Send, MapPin, GraduationCap, Code2, ChevronDown, ArrowUp,
   Briefcase, Heart, Globe, Terminal, Cpu, Database, Layout, Smartphone,
-  FileCode, Coffee, Loader2, Sparkles, Zap, BookOpen
+  FileCode, Coffee, Loader2, Sparkles, Zap, BookOpen, Users, Eye,
+  Calendar, RefreshCw, Clock, Activity, Folder
 } from 'lucide-react';
 
 const GITHUB_USERNAME = 'sanumaurya4u';
@@ -512,47 +513,44 @@ function SkillsSection() {
 // ===================== PROJECTS SECTION =====================
 function ProjectsSection() {
   const [repos, setRepos] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [selectedLang, setSelectedLang] = useState('All');
   const [languages, setLanguages] = useState(['All']);
+  const [dataSource, setDataSource] = useState('');
+  const [cachedAt, setCachedAt] = useState('');
   const sectionRef = useReveal();
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => { fetchProjects(false); }, []);
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (forceRefresh = false) => {
     try {
-      setLoading(true);
-      let repos_data = [];
-      try {
-        const res = await fetch(`/api/github?username=${GITHUB_USERNAME}`);
-        const data = await res.json();
-        if (data.success) repos_data = data.repos;
-        else throw new Error('API proxy failed');
-      } catch {
-        const res = await fetch(
-          `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=30`,
-          { headers: { 'Accept': 'application/vnd.github.v3+json' } }
-        );
-        if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
-        const raw = await res.json();
-        repos_data = raw.map(repo => ({
-          id: repo.id.toString(), name: repo.name,
-          description: repo.description || 'No description available',
-          language: repo.language || 'Unknown', html_url: repo.html_url,
-          homepage: repo.homepage || null, stars: repo.stargazers_count,
-          forks: repo.forks_count, updated_at: repo.updated_at,
-          topics: repo.topics || [], fork: repo.fork
-        }));
+      if (forceRefresh) setRefreshing(true);
+      else setLoading(true);
+      setError(null);
+
+      const url = `/api/github?username=${GITHUB_USERNAME}${forceRefresh ? '&refresh=true' : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.success) {
+        const nonForked = (data.repos || []).filter(r => !r.fork);
+        setRepos(nonForked);
+        setProfile(data.profile || null);
+        setDataSource(data.source || 'unknown');
+        setCachedAt(data.cached_at || '');
+        const langs = ['All', ...new Set(nonForked.map(r => r.language).filter(l => l && l !== 'Unknown'))];
+        setLanguages(langs);
+      } else {
+        setError(data.error || 'Failed to fetch projects');
       }
-      const nonForked = repos_data.filter(r => !r.fork);
-      setRepos(nonForked);
-      const langs = ['All', ...new Set(nonForked.map(r => r.language).filter(l => l && l !== 'Unknown'))];
-      setLanguages(langs);
     } catch (err) {
       setError('Failed to fetch projects. Please try again later.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -562,6 +560,26 @@ function ProjectsSection() {
     JavaScript: '#f1e05a', Python: '#3572A5', Java: '#b07219',
     'C++': '#f34b7d', C: '#555555', HTML: '#e34c26', CSS: '#563d7c',
     TypeScript: '#3178c6', PowerShell: '#012456', Unknown: '#8b8b8b',
+    Shell: '#89e051', Go: '#00ADD8', Rust: '#dea584', Ruby: '#701516',
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    return `${months}mo ago`;
   };
 
   return (
@@ -573,12 +591,90 @@ function ProjectsSection() {
           badge="My Projects"
           icon={<Github className="w-3.5 h-3.5" />}
           title="Featured Projects"
-          subtitle="A collection of my work fetched directly from GitHub"
+          subtitle="Dynamically fetched from GitHub API — always up to date"
         />
+
+        {/* GitHub Profile Stats Bar */}
+        {!loading && profile && (
+          <div className="reveal mb-10">
+            <Card className="glass border-border/50 overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  {/* Avatar + Name */}
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.name}
+                      className="w-12 h-12 rounded-full ring-2 ring-primary/30"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-base">{profile.name}</h3>
+                        <a
+                          href={profile.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          @{GITHUB_USERNAME}
+                        </a>
+                      </div>
+                      {profile.bio && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{profile.bio}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-4 sm:gap-6 sm:ml-auto">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-primary">{profile.public_repos}</p>
+                      <p className="text-xs text-muted-foreground">Repos</p>
+                    </div>
+                    <div className="w-px h-8 bg-border/50" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-primary">{profile.followers}</p>
+                      <p className="text-xs text-muted-foreground">Followers</p>
+                    </div>
+                    <div className="w-px h-8 bg-border/50" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-primary">{profile.following}</p>
+                      <p className="text-xs text-muted-foreground">Following</p>
+                    </div>
+                  </div>
+
+                  {/* Refresh + Source */}
+                  <div className="flex items-center gap-2 sm:ml-4">
+                    <button
+                      onClick={() => fetchProjects(true)}
+                      disabled={refreshing}
+                      className="p-2 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all duration-300 disabled:opacity-50"
+                      title="Refresh from GitHub"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                    <Badge
+                      className={`text-xs px-2 py-0.5 ${
+                        dataSource === 'live'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : dataSource === 'cache'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      }`}
+                    >
+                      <Activity className="w-3 h-3 mr-1" />
+                      {dataSource === 'live' ? 'Live' : dataSource === 'cache' ? 'Cached' : 'Stale'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Language Filter */}
         {!loading && !error && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-12 reveal">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-10 reveal">
             {languages.map((lang) => (
               <button
                 key={lang}
@@ -595,12 +691,13 @@ function ProjectsSection() {
                     style={{ backgroundColor: langColors[lang] || '#8b8b8b' }}
                   />
                 )}
-                {lang}
+                {lang} {lang === 'All' ? `(${repos.length})` : `(${repos.filter(r => r.language === lang).length})`}
               </button>
             ))}
           </div>
         )}
 
+        {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="relative">
@@ -608,20 +705,32 @@ function ProjectsSection() {
               <Github className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
             <p className="text-muted-foreground mt-4">Fetching projects from GitHub...</p>
+            <p className="text-xs text-muted-foreground mt-1">github.com/{GITHUB_USERNAME}</p>
           </div>
         )}
 
-        {error && (
+        {/* Error */}
+        {error && !loading && (
           <div className="text-center py-20 reveal">
-            <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={fetchProjects} variant="outline" className="rounded-xl">Try Again</Button>
+            <div className="inline-flex p-4 rounded-2xl bg-destructive/10 border border-destructive/20 mb-4">
+              <Github className="w-8 h-8 text-destructive" />
+            </div>
+            <p className="text-destructive mb-2 font-medium">{error}</p>
+            <p className="text-xs text-muted-foreground mb-4">GitHub API may be rate-limited. Try refreshing.</p>
+            <Button onClick={() => fetchProjects(true)} variant="outline" className="rounded-xl">
+              <RefreshCw className="w-4 h-4 mr-2" /> Try Again
+            </Button>
           </div>
         )}
 
+        {/* Project Cards */}
         {!loading && !error && (
           <>
             {filteredRepos.length === 0 ? (
-              <p className="text-center text-muted-foreground py-10">No projects found for this filter.</p>
+              <div className="text-center py-16">
+                <Folder className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground">No projects found for this filter.</p>
+              </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredRepos.map((repo, index) => (
@@ -632,10 +741,13 @@ function ProjectsSection() {
                   >
                     {/* Top gradient accent */}
                     <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg truncate group-hover:gradient-text transition-all duration-300">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-primary/10 flex-shrink-0">
+                            <Folder className="w-4 h-4 text-primary" />
+                          </div>
+                          <CardTitle className="text-base sm:text-lg truncate group-hover:text-primary transition-colors duration-300">
                             {repo.name}
                           </CardTitle>
                         </div>
@@ -643,22 +755,24 @@ function ProjectsSection() {
                           href={repo.html_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl hover:bg-primary/10 transition-all duration-300 flex-shrink-0 text-muted-foreground hover:text-primary"
+                          className="p-2 rounded-xl hover:bg-primary/10 transition-all duration-300 flex-shrink-0 text-muted-foreground hover:text-primary hover:scale-110"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       </div>
-                      <CardDescription className="line-clamp-2 mt-1 text-sm">
+                      <CardDescription className="line-clamp-2 mt-2 text-sm leading-relaxed">
                         {repo.description}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="mt-auto pt-0">
-                      <div className="flex items-center gap-3">
+
+                    <CardContent className="mt-auto pt-0 space-y-3">
+                      {/* Stats row */}
+                      <div className="flex items-center flex-wrap gap-3">
                         {repo.language && repo.language !== 'Unknown' && (
                           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <span
-                              className="w-3 h-3 rounded-full ring-2 ring-offset-1 ring-offset-background"
-                              style={{ backgroundColor: langColors[repo.language] || '#8b8b8b', ringColor: langColors[repo.language] || '#8b8b8b' }}
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: langColors[repo.language] || '#8b8b8b' }}
                             />
                             {repo.language}
                           </span>
@@ -669,15 +783,44 @@ function ProjectsSection() {
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <GitFork className="w-3 h-3" /> {repo.forks}
                         </span>
+                        {repo.watchers > 0 && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Eye className="w-3 h-3" /> {repo.watchers}
+                          </span>
+                        )}
                       </div>
+
+                      {/* Date info */}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground/70 pt-1 border-t border-border/30">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Updated {timeAgo(repo.updated_at || repo.pushed_at)}
+                        </span>
+                        {repo.size > 0 && (
+                          <span>{repo.size < 1024 ? `${repo.size} KB` : `${(repo.size / 1024).toFixed(1)} MB`}</span>
+                        )}
+                      </div>
+
+                      {/* Topics */}
                       {repo.topics && repo.topics.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {repo.topics.slice(0, 3).map((topic) => (
+                        <div className="flex flex-wrap gap-1.5">
+                          {repo.topics.slice(0, 4).map((topic) => (
                             <Badge key={topic} className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/20">
                               {topic}
                             </Badge>
                           ))}
                         </div>
+                      )}
+
+                      {/* Homepage link */}
+                      {repo.homepage && (
+                        <a
+                          href={repo.homepage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                        >
+                          <Globe className="w-3 h-3" /> Live Demo
+                        </a>
                       )}
                     </CardContent>
                   </Card>
@@ -685,12 +828,18 @@ function ProjectsSection() {
               </div>
             )}
 
-            <div className="text-center mt-12 reveal">
+            {/* View All + Last Updated */}
+            <div className="text-center mt-12 space-y-3 reveal">
               <Button asChild variant="outline" size="lg" className="rounded-xl glass border-border/50 hover:bg-primary/5 hover:border-primary/30">
                 <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
                   <Github className="w-4 h-4 mr-2" /> View All on GitHub
                 </a>
               </Button>
+              {cachedAt && (
+                <p className="text-xs text-muted-foreground/50 flex items-center justify-center gap-1">
+                  <Clock className="w-3 h-3" /> Last synced: {formatDate(cachedAt)} &middot; Source: {dataSource}
+                </p>
+              )}
             </div>
           </>
         )}
