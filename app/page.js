@@ -521,7 +521,6 @@ function ProjectsSection() {
   const [languages, setLanguages] = useState(['All']);
   const [dataSource, setDataSource] = useState('');
   const [cachedAt, setCachedAt] = useState('');
-  const sectionRef = useReveal();
 
   useEffect(() => { fetchProjects(false); }, []);
 
@@ -579,24 +578,29 @@ function ProjectsSection() {
     const days = Math.floor(hours / 24);
     if (days < 30) return `${days}d ago`;
     const months = Math.floor(days / 30);
-    return `${months}mo ago`;
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(months / 12)}y ago`;
   };
 
   return (
-    <section id="projects" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+    <section id="projects" className="py-24 sm:py-32 relative overflow-hidden">
       <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          badge="My Projects"
-          icon={<Github className="w-3.5 h-3.5" />}
-          title="Featured Projects"
-          subtitle="Dynamically fetched from GitHub API — always up to date"
-        />
+        {/* Section Heading */}
+        <div className="text-center mb-16">
+          <Badge variant="outline" className="mb-4 px-4 py-1.5 text-xs font-medium border-primary/20 bg-primary/5">
+            <Github className="w-3.5 h-3.5" /> <span className="ml-1.5">My Projects</span>
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Featured Projects</h2>
+          <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
+            Dynamically fetched from GitHub API — always up to date
+          </p>
+        </div>
 
         {/* GitHub Profile Stats Bar */}
         {!loading && profile && (
-          <div className="reveal mb-10">
+          <div className="mb-10 animate-fade-in-up">
             <Card className="glass border-border/50 overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
@@ -673,8 +677,8 @@ function ProjectsSection() {
         )}
 
         {/* Language Filter */}
-        {!loading && !error && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-10 reveal">
+        {!loading && !error && repos.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-10 animate-fade-in">
             {languages.map((lang) => (
               <button
                 key={lang}
@@ -691,7 +695,7 @@ function ProjectsSection() {
                     style={{ backgroundColor: langColors[lang] || '#8b8b8b' }}
                   />
                 )}
-                {lang} {lang === 'All' ? `(${repos.length})` : `(${repos.filter(r => r.language === lang).length})`}
+                {lang} ({lang === 'All' ? repos.length : repos.filter(r => r.language === lang).length})
               </button>
             ))}
           </div>
@@ -711,7 +715,7 @@ function ProjectsSection() {
 
         {/* Error */}
         {error && !loading && (
-          <div className="text-center py-20 reveal">
+          <div className="text-center py-20">
             <div className="inline-flex p-4 rounded-2xl bg-destructive/10 border border-destructive/20 mb-4">
               <Github className="w-8 h-8 text-destructive" />
             </div>
@@ -736,8 +740,8 @@ function ProjectsSection() {
                 {filteredRepos.map((repo, index) => (
                   <Card
                     key={repo.id}
-                    className="group glass hover-card-lift border-border/50 flex flex-col overflow-hidden reveal-scale"
-                    style={{ transitionDelay: `${index * 100}ms` }}
+                    className="group glass hover-card-lift border-border/50 flex flex-col overflow-hidden animate-fade-in-up"
+                    style={{ animationDelay: `${index * 120}ms`, animationFillMode: 'both' }}
                   >
                     {/* Top gradient accent */}
                     <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -783,7 +787,7 @@ function ProjectsSection() {
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <GitFork className="w-3 h-3" /> {repo.forks}
                         </span>
-                        {repo.watchers > 0 && (
+                        {(repo.watchers || 0) > 0 && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Eye className="w-3 h-3" /> {repo.watchers}
                           </span>
@@ -795,7 +799,7 @@ function ProjectsSection() {
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" /> Updated {timeAgo(repo.updated_at || repo.pushed_at)}
                         </span>
-                        {repo.size > 0 && (
+                        {(repo.size || 0) > 0 && (
                           <span>{repo.size < 1024 ? `${repo.size} KB` : `${(repo.size / 1024).toFixed(1)} MB`}</span>
                         )}
                       </div>
@@ -829,7 +833,7 @@ function ProjectsSection() {
             )}
 
             {/* View All + Last Updated */}
-            <div className="text-center mt-12 space-y-3 reveal">
+            <div className="text-center mt-12 space-y-3 animate-fade-in">
               <Button asChild variant="outline" size="lg" className="rounded-xl glass border-border/50 hover:bg-primary/5 hover:border-primary/30">
                 <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
                   <Github className="w-4 h-4 mr-2" /> View All on GitHub
