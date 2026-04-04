@@ -19,6 +19,32 @@ const LINKEDIN_URL = 'https://www.linkedin.com/in/sanu-kumar-91619b233';
 const RESUME_URL = 'https://customer-assets.emergentagent.com/job_cb536e5c-c6ff-4e60-9732-e9af9a31c485/artifacts/nhp0mich_Profile%20%284%29.pdf';
 const PROFILE_IMAGE = 'https://customer-assets.emergentagent.com/job_cse-portfolio-39/artifacts/609ekhyr_IMG_20260130_222658.jpg';
 
+// Section background images
+const BG_IMAGES = {
+  hero: 'https://images.unsplash.com/photo-1657894825744-1da6d5fbf24d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNobm9sb2d5fGVufDB8fHxibHVlfDE3NzUzMzM2MTh8MA&ixlib=rb-4.1.0&q=85',
+  about: 'https://images.unsplash.com/photo-1604011237320-8e0506614fdf?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNobm9sb2d5fGVufDB8fHxibHVlfDE3NzUzMzM2MTh8MA&ixlib=rb-4.1.0&q=85',
+  skills: 'https://images.unsplash.com/photo-1649682892309-e10e0b7cd40b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNobm9sb2d5fGVufDB8fHxibHVlfDE3NzUzMzM2MTh8MA&ixlib=rb-4.1.0&q=85',
+  projects: 'https://images.unsplash.com/photo-1620121478247-ec786b9be2fa?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwYmFja2dyb3VuZHxlbnwwfHx8Ymx1ZXwxNzc1MzMzNjIzfDA&ixlib=rb-4.1.0&q=85',
+  resume: 'https://images.unsplash.com/photo-1501820434261-5bb046afcf6b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwzfHxkaWdpdGFsJTIwYmFja2dyb3VuZHxlbnwwfHx8Ymx1ZXwxNzc1MzMzNjIzfDA&ixlib=rb-4.1.0&q=85',
+  contact: 'https://images.unsplash.com/photo-1604011237320-8e0506614fdf?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNobm9sb2d5fGVufDB8fHxibHVlfDE3NzUzMzM2MTh8MA&ixlib=rb-4.1.0&q=85',
+};
+
+// ===================== SECTION BACKGROUND COMPONENT =====================
+function SectionBg({ image, opacity = 0.08, overlay = 'from-background via-background/95 to-background' }) {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <img
+        src={image}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ opacity }}
+        loading="lazy"
+      />
+      <div className={`absolute inset-0 bg-gradient-to-b ${overlay}`} />
+    </div>
+  );
+}
+
 // ===================== SCROLL REVEAL HOOK =====================
 function useReveal() {
   const ref = useRef(null);
@@ -216,6 +242,8 @@ function HeroSection() {
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Background image */}
+      <SectionBg image={BG_IMAGES.hero} opacity={0.12} overlay="from-background via-background/90 to-background" />
       {/* Mesh gradient background */}
       <div className="absolute inset-0 mesh-gradient-1" />
       <ParticleField />
@@ -347,6 +375,7 @@ function AboutSection() {
 
   return (
     <section id="about" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.about} opacity={0.07} overlay="from-background via-background/95 to-background" />
       <div className="absolute inset-0 mesh-gradient-2" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -467,6 +496,7 @@ function SkillsSection() {
 
   return (
     <section id="skills" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.skills} opacity={0.06} overlay="from-background via-background/95 to-background" />
       <div className="absolute inset-0 mesh-gradient-1 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -584,6 +614,7 @@ function ProjectsSection() {
 
   return (
     <section id="projects" className="py-24 sm:py-32 relative overflow-hidden">
+      <SectionBg image={BG_IMAGES.projects} opacity={0.08} overlay="from-background via-background/95 to-background" />
       <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -858,6 +889,7 @@ function ResumeSection() {
 
   return (
     <section id="resume" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.resume} opacity={0.07} overlay="from-background via-background/95 to-background" />
       <div className="absolute inset-0 mesh-gradient-1 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -928,6 +960,7 @@ function ContactSection() {
 
   return (
     <section id="contact" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.contact} opacity={0.06} overlay="from-background via-background/95 to-background" />
       <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1050,6 +1083,7 @@ function ContactSection() {
 function Footer() {
   return (
     <footer className="border-t border-border/50 relative overflow-hidden">
+      <SectionBg image={BG_IMAGES.hero} opacity={0.05} overlay="from-background via-background/95 to-background" />
       <div className="absolute inset-0 mesh-gradient-1 opacity-30" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
