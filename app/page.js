@@ -11,7 +11,8 @@ import {
   Download, Send, MapPin, GraduationCap, Code2, ChevronDown, ArrowUp,
   Briefcase, Heart, Globe, Terminal, Cpu, Database, Layout, Smartphone,
   FileCode, Coffee, Loader2, Sparkles, Zap, BookOpen, Users, Eye,
-  Calendar, RefreshCw, Clock, Activity, Folder
+  Calendar, RefreshCw, Clock, Activity, Folder, Trophy, Target, Flame,
+  Award, ArrowRight, MousePointer2, Monitor
 } from 'lucide-react';
 
 const GITHUB_USERNAME = 'sanumaurya4u';
@@ -63,7 +64,7 @@ function useReveal() {
 
     const el = ref.current;
     if (el) {
-      const reveals = el.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+      const reveals = el.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger-children');
       reveals.forEach((r) => observer.observe(r));
     }
 
@@ -102,24 +103,76 @@ function useTypewriter(texts, speed = 80, pause = 2000) {
   return displayText;
 }
 
+// ===================== COUNTER HOOK =====================
+function useCounter(target, duration = 2000, inView = false) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let startTime = null;
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      setCount(Math.floor(progress * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, inView]);
+
+  return count;
+}
+
+// ===================== MOUSE GLOW HOOK =====================
+function useMouseGlow(ref) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const handleMouse = (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      el.style.setProperty('--mouse-x', `${x}px`);
+      el.style.setProperty('--mouse-y', `${y}px`);
+    };
+
+    el.addEventListener('mousemove', handleMouse);
+    return () => el.removeEventListener('mousemove', handleMouse);
+  }, [ref]);
+}
+
 // ===================== PARTICLE BACKGROUND =====================
 function ParticleField() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(20)].map((_, i) => (
+      {[...Array(30)].map((_, i) => (
         <div
           key={i}
-          className="absolute rounded-full bg-primary/10 animate-float"
+          className="absolute rounded-full animate-float"
           style={{
-            width: `${Math.random() * 4 + 2}px`,
-            height: `${Math.random() * 4 + 2}px`,
+            width: `${Math.random() * 4 + 1}px`,
+            height: `${Math.random() * 4 + 1}px`,
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
+            background: `radial-gradient(circle, ${
+              ['rgba(99,102,241,0.3)', 'rgba(139,92,246,0.3)', 'rgba(236,72,153,0.2)', 'rgba(6,182,212,0.2)'][Math.floor(Math.random() * 4)]
+            }, transparent)`,
             animationDelay: `${Math.random() * 6}s`,
-            animationDuration: `${Math.random() * 4 + 4}s`,
+            animationDuration: `${Math.random() * 6 + 4}s`,
           }}
         />
       ))}
+    </div>
+  );
+}
+
+// ===================== AURORA BACKGROUND =====================
+function AuroraBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+      <div className="absolute -top-[40%] -left-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-transparent blur-3xl animate-aurora" />
+      <div className="absolute -bottom-[40%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-l from-pink-500/15 via-violet-500/15 to-transparent blur-3xl animate-aurora animation-delay-500" />
+      <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-b from-cyan-500/10 via-blue-500/10 to-transparent blur-3xl animate-aurora animation-delay-1000" />
     </div>
   );
 }
@@ -129,10 +182,15 @@ function Navbar({ darkMode, setDarkMode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+
+      // Calculate scroll progress
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0);
 
       const sections = ['home', 'about', 'skills', 'projects', 'resume', 'contact'];
       for (const section of sections.reverse()) {
@@ -148,86 +206,105 @@ function Navbar({ darkMode, setDarkMode }) {
   }, []);
 
   const navLinks = [
-    { name: 'Home', href: '#home' },
-    { name: 'About', href: '#about' },
-    { name: 'Skills', href: '#skills' },
-    { name: 'Projects', href: '#projects' },
-    { name: 'Resume', href: '#resume' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'Home', href: '#home', icon: <Monitor className="w-3.5 h-3.5" /> },
+    { name: 'About', href: '#about', icon: <BookOpen className="w-3.5 h-3.5" /> },
+    { name: 'Skills', href: '#skills', icon: <Cpu className="w-3.5 h-3.5" /> },
+    { name: 'Projects', href: '#projects', icon: <Folder className="w-3.5 h-3.5" /> },
+    { name: 'Resume', href: '#resume', icon: <FileCode className="w-3.5 h-3.5" /> },
+    { name: 'Contact', href: '#contact', icon: <Mail className="w-3.5 h-3.5" /> },
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      scrolled
-        ? 'glass-strong shadow-lg shadow-black/5'
-        : 'bg-transparent'
-    }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <a href="#home" className="text-xl font-bold gradient-text-blue tracking-tight">
-            &lt;SK /&gt;
-          </a>
+    <>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? 'glass-premium shadow-lg shadow-black/5'
+          : 'bg-transparent'
+      }`}>
+        {/* Scroll progress bar */}
+        <div className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-150 ease-out" style={{ width: `${scrollProgress}%` }} />
 
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => {
-              const isActive = activeSection === link.href.slice(1);
-              return (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 rounded-lg ${
-                    isActive
-                      ? 'text-primary'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {link.name}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
-                  )}
-                </a>
-              );
-            })}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="ml-3 p-2 rounded-xl glass hover:bg-primary/10 transition-all duration-300 text-muted-foreground hover:text-primary"
-            >
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <a href="#home" className="text-xl font-bold gradient-text-aurora tracking-tight hover:scale-105 transition-transform duration-300">
+              &lt;SK /&gt;
+            </a>
 
-          <div className="md:hidden flex items-center gap-2">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-xl glass transition-colors"
-            >
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 rounded-xl glass transition-colors"
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
+            <div className="hidden md:flex items-center gap-1 p-1 rounded-2xl glass">
+              {navLinks.map((link) => {
+                const isActive = activeSection === link.href.slice(1);
+                return (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 rounded-xl flex items-center gap-2 ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl shadow-lg shadow-indigo-500/25 -z-10 animate-scale-in" />
+                    )}
+                    {link.icon}
+                    {link.name}
+                  </a>
+                );
+              })}
+            </div>
 
-        {mobileOpen && (
-          <div className="md:hidden pb-4 animate-fade-in glass-strong rounded-2xl mt-2 p-2">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 rounded-xl transition-colors"
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2.5 rounded-xl glass hover:bg-primary/10 transition-all duration-300 text-muted-foreground hover:text-primary hover:scale-110 hover:rotate-12"
               >
-                {link.name}
-              </a>
-            ))}
+                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <div className="md:hidden flex items-center gap-2">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-xl glass transition-colors"
+              >
+                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="p-2 rounded-xl glass transition-colors"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
-    </nav>
+
+          {mobileOpen && (
+            <div className="md:hidden pb-4 animate-slide-up glass-premium rounded-2xl mt-2 p-3">
+              {navLinks.map((link, i) => {
+                const isActive = activeSection === link.href.slice(1);
+                return (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3.5 text-sm font-medium rounded-xl transition-all duration-300 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-primary border border-primary/20'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-primary/5'
+                    }`}
+                    style={{ animationDelay: `${i * 50}ms` }}
+                  >
+                    {link.icon}
+                    {link.name}
+                    {isActive && <Sparkles className="w-3 h-3 ml-auto text-primary" />}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </nav>
+    </>
   );
 }
 
@@ -240,32 +317,39 @@ function HeroSection() {
     'UGC Creator',
   ], 80, 2000);
 
+  const heroRef = useRef(null);
+
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden" ref={heroRef}>
       {/* Background image */}
       <SectionBg image={BG_IMAGES.hero} opacity={0.12} overlay="from-background via-background/90 to-background" />
-      {/* Mesh gradient background */}
+      {/* Aurora & Mesh gradient */}
+      <AuroraBackground />
       <div className="absolute inset-0 mesh-gradient-1" />
       <ParticleField />
 
       {/* Decorative orbs */}
-      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-indigo-500/8 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500/8 rounded-full blur-3xl animate-float animation-delay-400" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/3 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float animation-delay-400" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl animate-morph" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20">
           {/* Left: Text Content */}
           <div className="flex-1 text-center lg:text-left order-2 lg:order-1">
             <div className="animate-fade-in-up">
-              <Badge className="mb-6 px-4 py-1.5 text-xs font-medium bg-primary/10 text-primary border-primary/20 hover:bg-primary/15">
-                <Sparkles className="w-3 h-3 mr-1.5" /> Available for Opportunities
+              <Badge className="mb-6 px-5 py-2 text-xs font-medium bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-primary border-primary/20 hover:border-primary/40 transition-colors">
+                <span className="relative flex h-2 w-2 mr-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                Available for Opportunities
               </Badge>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 tracking-tight animate-fade-in-up animation-delay-100">
               Hi, I'm{' '}
-              <span className="gradient-text">Sanu Kumar</span>
+              <span className="gradient-text-aurora">Sanu Kumar</span>
             </h1>
 
             <div className="h-10 sm:h-12 mb-6 animate-fade-in-up animation-delay-200">
@@ -282,11 +366,18 @@ function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 animate-fade-in-up animation-delay-400">
-              <Button asChild size="lg" className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl px-8 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5">
-                <a href="#projects"><Zap className="w-4 h-4 mr-2" /> View Projects</a>
+              <Button asChild size="lg" className="group bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl px-8 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-1">
+                <a href="#projects">
+                  <Zap className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+                  View Projects
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </a>
               </Button>
-              <Button asChild variant="outline" size="lg" className="rounded-xl px-8 border-border/50 glass hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 hover:-translate-y-0.5">
-                <a href="#contact"><Mail className="w-4 h-4 mr-2" /> Get In Touch</a>
+              <Button asChild variant="outline" size="lg" className="group rounded-xl px-8 border-border/50 glass hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 gradient-border">
+                <a href="#contact">
+                  <Mail className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                  Get In Touch
+                </a>
               </Button>
             </div>
 
@@ -302,7 +393,7 @@ function HeroSection() {
                   href={link.href}
                   target={link.href.startsWith('http') ? '_blank' : undefined}
                   rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className="group p-3 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10"
+                  className="group p-3 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1"
                   aria-label={link.label}
                 >
                   {link.icon}
@@ -330,14 +421,17 @@ function HeroSection() {
                 </div>
 
                 {/* Floating badges around image */}
-                <div className="absolute -top-2 -right-2 p-2 rounded-xl glass-strong shadow-lg animate-float animation-delay-200">
+                <div className="absolute -top-2 -right-2 p-2.5 rounded-xl glass-premium shadow-lg animate-float animation-delay-200">
                   <Code2 className="w-5 h-5 text-indigo-400" />
                 </div>
-                <div className="absolute -bottom-2 -left-2 p-2 rounded-xl glass-strong shadow-lg animate-float animation-delay-600">
+                <div className="absolute -bottom-2 -left-2 p-2.5 rounded-xl glass-premium shadow-lg animate-float animation-delay-600">
                   <Terminal className="w-5 h-5 text-purple-400" />
                 </div>
-                <div className="absolute top-1/2 -right-6 p-2 rounded-xl glass-strong shadow-lg animate-float animation-delay-400">
+                <div className="absolute top-1/2 -right-6 p-2.5 rounded-xl glass-premium shadow-lg animate-float animation-delay-400">
                   <Sparkles className="w-5 h-5 text-pink-400" />
+                </div>
+                <div className="absolute -top-4 left-1/3 p-2 rounded-xl glass-premium shadow-lg animate-float animation-delay-800">
+                  <Flame className="w-4 h-4 text-amber-400" />
                 </div>
               </div>
             </div>
@@ -347,7 +441,9 @@ function HeroSection() {
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-fade-in animation-delay-1000">
           <span className="text-xs text-muted-foreground tracking-widest uppercase">Scroll</span>
-          <ChevronDown className="w-5 h-5 text-muted-foreground animate-bounce" />
+          <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex items-start justify-center p-1">
+            <div className="w-1.5 h-3 rounded-full bg-primary animate-bounce" />
+          </div>
         </div>
       </div>
     </section>
@@ -358,13 +454,40 @@ function HeroSection() {
 function SectionHeading({ badge, icon, title, subtitle }) {
   return (
     <div className="text-center mb-16 reveal">
-      <Badge variant="outline" className="mb-4 px-4 py-1.5 text-xs font-medium border-primary/20 bg-primary/5">
+      <Badge variant="outline" className="mb-4 px-5 py-2 text-xs font-medium border-primary/20 bg-gradient-to-r from-primary/5 to-purple-500/5 hover:border-primary/40 transition-colors">
         {icon} <span className="ml-1.5">{badge}</span>
       </Badge>
-      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">{title}</h2>
+      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+        {title.split(' ').map((word, i) => (
+          <span key={i}>
+            {i === title.split(' ').length - 1 ? (
+              <span className="gradient-text">{word}</span>
+            ) : (
+              word + ' '
+            )}
+          </span>
+        ))}
+      </h2>
       {subtitle && (
         <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">{subtitle}</p>
       )}
+      <div className="flex justify-center mt-6">
+        <div className="w-20 h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-draw-line" />
+      </div>
+    </div>
+  );
+}
+
+// ===================== STAT CARD =====================
+function StatCard({ icon, value, label, suffix = '', inView }) {
+  const count = useCounter(parseInt(value), 2000, inView);
+  return (
+    <div className="text-center p-4 rounded-2xl glass hover-card-lift group cursor-default">
+      <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/20 mb-3 group-hover:scale-110 transition-transform duration-300">
+        {icon}
+      </div>
+      <p className="text-2xl sm:text-3xl font-bold gradient-text stat-number">{count}{suffix}</p>
+      <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }
@@ -372,6 +495,17 @@ function SectionHeading({ badge, icon, title, subtitle }) {
 // ===================== ABOUT SECTION =====================
 function AboutSection() {
   const sectionRef = useReveal();
+  const [statsInView, setStatsInView] = useState(false);
+  const statsRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setStatsInView(true); },
+      { threshold: 0.3 }
+    );
+    if (statsRef.current) observer.observe(statsRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section id="about" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
@@ -406,10 +540,17 @@ function AboutSection() {
                 { icon: <Briefcase className="w-3 h-3" />, text: 'Freelancer' },
                 { icon: <Globe className="w-3 h-3" />, text: 'UGC Creator' },
               ].map((tag) => (
-                <Badge key={tag.text} className="px-3 py-1.5 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 transition-colors">
+                <Badge key={tag.text} className="px-3 py-1.5 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 hover:scale-105 transition-all cursor-default">
                   {tag.icon} <span className="ml-1">{tag.text}</span>
                 </Badge>
               ))}
+            </div>
+
+            {/* Stats Grid */}
+            <div ref={statsRef} className="grid grid-cols-3 gap-3 pt-4">
+              <StatCard icon={<Code2 className="w-5 h-5 text-indigo-400" />} value="15" suffix="+" label="Projects" inView={statsInView} />
+              <StatCard icon={<Trophy className="w-5 h-5 text-amber-400" />} value="500" suffix="+" label="DSA Problems" inView={statsInView} />
+              <StatCard icon={<Target className="w-5 h-5 text-emerald-400" />} value="3" suffix="+" label="Certifications" inView={statsInView} />
             </div>
           </div>
 
@@ -434,26 +575,26 @@ function AboutSection() {
                 details: ['Rohtak, Haryana, India']
               },
               {
-                icon: <FileCode className="w-6 h-6" />,
+                icon: <Award className="w-6 h-6" />,
                 iconColor: 'text-amber-400',
                 iconBg: 'from-amber-500/15 to-orange-500/15 border-amber-500/20',
                 title: 'Certification',
                 details: ['Certificate of Completion - React & Redux']
               },
             ].map((card, i) => (
-              <Card key={i} className="glass hover-card-lift border-border/50 overflow-hidden group">
+              <Card key={i} className="glass-premium hover-card-lift border-border/50 overflow-hidden group gradient-border" style={{ transitionDelay: `${i * 100}ms` }}>
                 <CardContent className="p-5 sm:p-6">
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${card.iconBg} border ${card.iconColor} flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${card.iconBg} border ${card.iconColor} flex-shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                       {card.icon}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-base sm:text-lg font-semibold">{card.title}</h3>
+                      <h3 className="text-base sm:text-lg font-semibold group-hover:text-primary transition-colors">{card.title}</h3>
                       {card.subtitle && <p className={`font-medium text-sm ${card.subtitleColor}`}>{card.subtitle}</p>}
                       {card.details?.map((d, j) => (
                         <p key={j} className="text-sm text-muted-foreground mt-0.5">{d}</p>
                       ))}
-                      {card.badge && <Badge variant="outline" className="mt-2 text-xs border-primary/20">{card.badge}</Badge>}
+                      {card.badge && <Badge variant="outline" className="mt-2 text-xs border-primary/20 animate-border-glow">{card.badge}</Badge>}
                     </div>
                   </div>
                 </CardContent>
@@ -469,27 +610,66 @@ function AboutSection() {
 // ===================== SKILLS SECTION =====================
 const skillsData = {
   'Programming Languages': [
-    { name: 'C++', icon: <Terminal className="w-5 h-5" />, gradient: 'from-blue-500 to-blue-700' },
-    { name: 'Java', icon: <Coffee className="w-5 h-5" />, gradient: 'from-red-500 to-orange-500' },
-    { name: 'Python', icon: <Code2 className="w-5 h-5" />, gradient: 'from-yellow-500 to-green-500' },
-    { name: 'JavaScript', icon: <FileCode className="w-5 h-5" />, gradient: 'from-yellow-400 to-yellow-600' },
-    { name: 'C', icon: <Terminal className="w-5 h-5" />, gradient: 'from-slate-500 to-slate-700' },
+    { name: 'C++', icon: <Terminal className="w-5 h-5" />, gradient: 'from-blue-500 to-blue-700', level: 85 },
+    { name: 'Java', icon: <Coffee className="w-5 h-5" />, gradient: 'from-red-500 to-orange-500', level: 75 },
+    { name: 'Python', icon: <Code2 className="w-5 h-5" />, gradient: 'from-yellow-500 to-green-500', level: 80 },
+    { name: 'JavaScript', icon: <FileCode className="w-5 h-5" />, gradient: 'from-yellow-400 to-yellow-600', level: 85 },
+    { name: 'C', icon: <Terminal className="w-5 h-5" />, gradient: 'from-slate-500 to-slate-700', level: 70 },
   ],
   'Web Technologies': [
-    { name: 'HTML5', icon: <Layout className="w-5 h-5" />, gradient: 'from-orange-500 to-red-500' },
-    { name: 'CSS3', icon: <Layout className="w-5 h-5" />, gradient: 'from-blue-400 to-blue-600' },
-    { name: 'React', icon: <Code2 className="w-5 h-5" />, gradient: 'from-cyan-400 to-blue-500' },
-    { name: 'Next.js', icon: <Globe className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800' },
-    { name: 'Tailwind', icon: <Layout className="w-5 h-5" />, gradient: 'from-teal-400 to-cyan-500' },
+    { name: 'HTML5', icon: <Layout className="w-5 h-5" />, gradient: 'from-orange-500 to-red-500', level: 95 },
+    { name: 'CSS3', icon: <Layout className="w-5 h-5" />, gradient: 'from-blue-400 to-blue-600', level: 90 },
+    { name: 'React', icon: <Code2 className="w-5 h-5" />, gradient: 'from-cyan-400 to-blue-500', level: 80 },
+    { name: 'Next.js', icon: <Globe className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800', level: 75 },
+    { name: 'Tailwind', icon: <Layout className="w-5 h-5" />, gradient: 'from-teal-400 to-cyan-500', level: 85 },
   ],
   'Tools & Others': [
-    { name: 'Git & GitHub', icon: <Github className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800' },
-    { name: 'MongoDB', icon: <Database className="w-5 h-5" />, gradient: 'from-green-500 to-green-700' },
-    { name: 'Node.js', icon: <Cpu className="w-5 h-5" />, gradient: 'from-green-400 to-green-600' },
-    { name: 'DSA', icon: <Terminal className="w-5 h-5" />, gradient: 'from-purple-500 to-pink-500' },
-    { name: 'Responsive', icon: <Smartphone className="w-5 h-5" />, gradient: 'from-pink-400 to-rose-500' },
+    { name: 'Git & GitHub', icon: <Github className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800', level: 85 },
+    { name: 'MongoDB', icon: <Database className="w-5 h-5" />, gradient: 'from-green-500 to-green-700', level: 70 },
+    { name: 'Node.js', icon: <Cpu className="w-5 h-5" />, gradient: 'from-green-400 to-green-600', level: 75 },
+    { name: 'DSA', icon: <Terminal className="w-5 h-5" />, gradient: 'from-purple-500 to-pink-500', level: 80 },
+    { name: 'Responsive', icon: <Smartphone className="w-5 h-5" />, gradient: 'from-pink-400 to-rose-500', level: 90 },
   ],
 };
+
+function SkillCard({ skill, index }) {
+  const [inView, setInView] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setInView(true); },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <Card
+      ref={ref}
+      className="group glass-premium hover-card-lift border-border/50 cursor-default overflow-hidden gradient-border"
+      style={{ transitionDelay: `${index * 50}ms` }}
+    >
+      <CardContent className="p-4 sm:p-5 text-center relative">
+        {/* Hover gradient overlay */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${skill.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+        <div className={`relative inline-flex p-3 rounded-2xl bg-gradient-to-br ${skill.gradient} mb-3 text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl group-hover:rotate-3 transition-all duration-300`}>
+          {skill.icon}
+        </div>
+        <p className="relative text-sm font-medium mb-2">{skill.name}</p>
+        {/* Skill progress bar */}
+        <div className="skill-progress">
+          <div
+            className={`skill-progress-bar ${inView ? 'visible' : ''}`}
+            style={{ transform: inView ? `scaleX(${skill.level / 100})` : 'scaleX(0)' }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 opacity-0 group-hover:opacity-100 transition-opacity">{skill.level}%</p>
+      </CardContent>
+    </Card>
+  );
+}
 
 function SkillsSection() {
   const sectionRef = useReveal();
@@ -511,25 +691,13 @@ function SkillsSection() {
           {Object.entries(skillsData).map(([category, items], catIndex) => (
             <div key={category} className="reveal" style={{ transitionDelay: `${catIndex * 150}ms` }}>
               <h3 className="text-lg sm:text-xl font-semibold mb-6 flex items-center gap-3">
-                <div className="w-8 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+                <div className="w-10 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-draw-line" />
                 {category}
+                <Badge variant="outline" className="ml-auto text-xs border-primary/20 bg-primary/5">{items.length} skills</Badge>
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
                 {items.map((skill, i) => (
-                  <Card
-                    key={skill.name}
-                    className="group glass hover-card-lift border-border/50 cursor-default overflow-hidden"
-                    style={{ transitionDelay: `${i * 50}ms` }}
-                  >
-                    <CardContent className="p-4 sm:p-5 text-center relative">
-                      {/* Hover gradient overlay */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${skill.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                      <div className={`relative inline-flex p-3 rounded-2xl bg-gradient-to-br ${skill.gradient} mb-3 text-white shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
-                        {skill.icon}
-                      </div>
-                      <p className="relative text-sm font-medium">{skill.name}</p>
-                    </CardContent>
-                  </Card>
+                  <SkillCard key={skill.name} skill={skill} index={i} />
                 ))}
               </div>
             </div>
@@ -615,33 +783,41 @@ function ProjectsSection() {
   return (
     <section id="projects" className="py-24 sm:py-32 relative overflow-hidden">
       <SectionBg image={BG_IMAGES.projects} opacity={0.08} overlay="from-background via-background/95 to-background" />
-      <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
+      <div className="absolute inset-0 mesh-gradient-3 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
         <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 px-4 py-1.5 text-xs font-medium border-primary/20 bg-primary/5">
+          <Badge variant="outline" className="mb-4 px-5 py-2 text-xs font-medium border-primary/20 bg-gradient-to-r from-primary/5 to-purple-500/5">
             <Github className="w-3.5 h-3.5" /> <span className="ml-1.5">My Projects</span>
           </Badge>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Featured Projects</h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+            Featured <span className="gradient-text">Projects</span>
+          </h2>
           <p className="text-muted-foreground mt-4 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
             Dynamically fetched from GitHub API — always up to date
           </p>
+          <div className="flex justify-center mt-6">
+            <div className="w-20 h-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          </div>
         </div>
 
         {/* GitHub Profile Stats Bar */}
         {!loading && profile && (
           <div className="mb-10 animate-fade-in-up">
-            <Card className="glass border-border/50 overflow-hidden">
+            <Card className="glass-premium border-border/50 overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                   {/* Avatar + Name */}
                   <div className="flex items-center gap-4">
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.name}
-                      className="w-12 h-12 rounded-full ring-2 ring-primary/30"
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 animate-pulse-glow opacity-30" />
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile.name}
+                        className="relative w-14 h-14 rounded-full ring-2 ring-primary/30"
+                      />
+                    </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-base">{profile.name}</h3>
@@ -662,20 +838,16 @@ function ProjectsSection() {
 
                   {/* Stats */}
                   <div className="flex items-center gap-4 sm:gap-6 sm:ml-auto">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-primary">{profile.public_repos}</p>
-                      <p className="text-xs text-muted-foreground">Repos</p>
-                    </div>
-                    <div className="w-px h-8 bg-border/50" />
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-primary">{profile.followers}</p>
-                      <p className="text-xs text-muted-foreground">Followers</p>
-                    </div>
-                    <div className="w-px h-8 bg-border/50" />
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-primary">{profile.following}</p>
-                      <p className="text-xs text-muted-foreground">Following</p>
-                    </div>
+                    {[
+                      { value: profile.public_repos, label: 'Repos' },
+                      { value: profile.followers, label: 'Followers' },
+                      { value: profile.following, label: 'Following' },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center group">
+                        <p className="text-lg font-bold text-primary group-hover:scale-110 transition-transform">{stat.value}</p>
+                        <p className="text-xs text-muted-foreground">{stat.label}</p>
+                      </div>
+                    ))}
                   </div>
 
                   {/* Refresh + Source */}
@@ -683,13 +855,13 @@ function ProjectsSection() {
                     <button
                       onClick={() => fetchProjects(true)}
                       disabled={refreshing}
-                      className="p-2 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all duration-300 disabled:opacity-50"
+                      className="p-2.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all duration-300 disabled:opacity-50 hover:scale-110 hover:rotate-180"
                       title="Refresh from GitHub"
                     >
                       <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                     </button>
                     <Badge
-                      className={`text-xs px-2 py-0.5 ${
+                      className={`text-xs px-3 py-1 ${
                         dataSource === 'live'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : dataSource === 'cache'
@@ -697,7 +869,14 @@ function ProjectsSection() {
                           : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}
                     >
-                      <Activity className="w-3 h-3 mr-1" />
+                      <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                          dataSource === 'live' ? 'bg-emerald-400' : dataSource === 'cache' ? 'bg-blue-400' : 'bg-amber-400'
+                        }`}></span>
+                        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                          dataSource === 'live' ? 'bg-emerald-500' : dataSource === 'cache' ? 'bg-blue-500' : 'bg-amber-500'
+                        }`}></span>
+                      </span>
                       {dataSource === 'live' ? 'Live' : dataSource === 'cache' ? 'Cached' : 'Stale'}
                     </Badge>
                   </div>
@@ -714,15 +893,15 @@ function ProjectsSection() {
               <button
                 key={lang}
                 onClick={() => setSelectedLang(lang)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
                   selectedLang === lang
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
-                    : 'glass text-muted-foreground hover:text-foreground hover:bg-primary/5'
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20 scale-105'
+                    : 'glass text-muted-foreground hover:text-foreground hover:bg-primary/5 hover:scale-105'
                 }`}
               >
                 {lang !== 'All' && (
                   <span
-                    className="inline-block w-2 h-2 rounded-full mr-2"
+                    className="inline-block w-2.5 h-2.5 rounded-full mr-2"
                     style={{ backgroundColor: langColors[lang] || '#8b8b8b' }}
                   />
                 )}
@@ -736,10 +915,12 @@ function ProjectsSection() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-              <Github className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-20 h-20 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Github className="w-8 h-8 text-primary animate-pulse" />
+              </div>
             </div>
-            <p className="text-muted-foreground mt-4">Fetching projects from GitHub...</p>
+            <p className="text-muted-foreground mt-6 animate-pulse">Fetching projects from GitHub...</p>
             <p className="text-xs text-muted-foreground mt-1">github.com/{GITHUB_USERNAME}</p>
           </div>
         )}
@@ -747,12 +928,12 @@ function ProjectsSection() {
         {/* Error */}
         {error && !loading && (
           <div className="text-center py-20">
-            <div className="inline-flex p-4 rounded-2xl bg-destructive/10 border border-destructive/20 mb-4">
+            <div className="inline-flex p-4 rounded-2xl bg-destructive/10 border border-destructive/20 mb-4 animate-scale-in">
               <Github className="w-8 h-8 text-destructive" />
             </div>
             <p className="text-destructive mb-2 font-medium">{error}</p>
             <p className="text-xs text-muted-foreground mb-4">GitHub API may be rate-limited. Try refreshing.</p>
-            <Button onClick={() => fetchProjects(true)} variant="outline" className="rounded-xl">
+            <Button onClick={() => fetchProjects(true)} variant="outline" className="rounded-xl hover:scale-105 transition-transform">
               <RefreshCw className="w-4 h-4 mr-2" /> Try Again
             </Button>
           </div>
@@ -771,15 +952,15 @@ function ProjectsSection() {
                 {filteredRepos.map((repo, index) => (
                   <Card
                     key={repo.id}
-                    className="group glass hover-card-lift border-border/50 flex flex-col overflow-hidden animate-fade-in-up"
-                    style={{ animationDelay: `${index * 120}ms`, animationFillMode: 'both' }}
+                    className="group glass-premium hover-card-lift border-border/50 flex flex-col overflow-hidden animate-fade-in-up gradient-border"
+                    style={{ animationDelay: `${index * 80}ms`, animationFillMode: 'both' }}
                   >
                     {/* Top gradient accent */}
                     <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="p-1.5 rounded-lg bg-primary/10 flex-shrink-0">
+                          <div className="p-1.5 rounded-lg bg-primary/10 flex-shrink-0 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
                             <Folder className="w-4 h-4 text-primary" />
                           </div>
                           <CardTitle className="text-base sm:text-lg truncate group-hover:text-primary transition-colors duration-300">
@@ -790,7 +971,7 @@ function ProjectsSection() {
                           href={repo.html_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 rounded-xl hover:bg-primary/10 transition-all duration-300 flex-shrink-0 text-muted-foreground hover:text-primary hover:scale-110"
+                          className="p-2 rounded-xl hover:bg-primary/10 transition-all duration-300 flex-shrink-0 text-muted-foreground hover:text-primary hover:scale-110 hover:rotate-12"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
@@ -806,20 +987,20 @@ function ProjectsSection() {
                         {repo.language && repo.language !== 'Unknown' && (
                           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <span
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: langColors[repo.language] || '#8b8b8b' }}
+                              className="w-3 h-3 rounded-full ring-2 ring-offset-1 ring-offset-background"
+                              style={{ backgroundColor: langColors[repo.language] || '#8b8b8b', ringColor: langColors[repo.language] || '#8b8b8b' }}
                             />
                             {repo.language}
                           </span>
                         )}
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground hover:text-amber-400 transition-colors cursor-default">
                           <Star className="w-3 h-3" /> {repo.stars}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-400 transition-colors cursor-default">
                           <GitFork className="w-3 h-3" /> {repo.forks}
                         </span>
                         {(repo.watchers || 0) > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald-400 transition-colors cursor-default">
                             <Eye className="w-3 h-3" /> {repo.watchers}
                           </span>
                         )}
@@ -839,7 +1020,7 @@ function ProjectsSection() {
                       {repo.topics && repo.topics.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {repo.topics.slice(0, 4).map((topic) => (
-                            <Badge key={topic} className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/20">
+                            <Badge key={topic} className="text-xs px-2 py-0.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors">
                               {topic}
                             </Badge>
                           ))}
@@ -852,9 +1033,10 @@ function ProjectsSection() {
                           href={repo.homepage}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline group/link"
                         >
-                          <Globe className="w-3 h-3" /> Live Demo
+                          <Globe className="w-3 h-3 group-hover/link:rotate-12 transition-transform" /> Live Demo
+                          <ArrowRight className="w-3 h-3 group-hover/link:translate-x-1 transition-transform" />
                         </a>
                       )}
                     </CardContent>
@@ -865,9 +1047,10 @@ function ProjectsSection() {
 
             {/* View All + Last Updated */}
             <div className="text-center mt-12 space-y-3 animate-fade-in">
-              <Button asChild variant="outline" size="lg" className="rounded-xl glass border-border/50 hover:bg-primary/5 hover:border-primary/30">
+              <Button asChild variant="outline" size="lg" className="group rounded-xl glass border-border/50 hover:bg-primary/5 hover:border-primary/30 hover:scale-105 transition-all gradient-border">
                 <a href={`https://github.com/${GITHUB_USERNAME}?tab=repositories`} target="_blank" rel="noopener noreferrer">
-                  <Github className="w-4 h-4 mr-2" /> View All on GitHub
+                  <Github className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" /> View All on GitHub
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </a>
               </Button>
               {cachedAt && (
@@ -900,23 +1083,38 @@ function ResumeSection() {
           subtitle="Download my resume to learn more about my education, skills, and experiences"
         />
 
-        <Card className="max-w-lg mx-auto glass border-border/50 overflow-hidden reveal-scale">
-          <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+        <Card className="max-w-lg mx-auto glass-premium border-border/50 overflow-hidden reveal-scale gradient-border group">
+          <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 group-hover:h-2 transition-all duration-300" />
           <CardContent className="p-8 sm:p-10 text-center">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/20 flex items-center justify-center">
-              <FileCode className="w-10 h-10 text-indigo-400" />
+            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/20 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <FileCode className="w-12 h-12 text-indigo-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Sanu Kumar</h3>
-            <p className="text-muted-foreground text-sm mb-6">
+            <h3 className="text-2xl font-bold mb-2">Sanu Kumar</h3>
+            <p className="text-muted-foreground text-sm mb-8">
               B.Tech CSE | Full Stack Developer | Freelancer
             </p>
+
+            {/* Quick stats */}
+            <div className="grid grid-cols-3 gap-3 mb-8">
+              {[
+                { label: 'Education', value: 'B.Tech CSE' },
+                { label: 'University', value: 'MDU Rohtak' },
+                { label: 'Batch', value: '2024-28' },
+              ].map((item) => (
+                <div key={item.label} className="p-3 rounded-xl glass text-center">
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="text-sm font-medium mt-0.5">{item.value}</p>
+                </div>
+              ))}
+            </div>
+
             <Button
               asChild
               size="lg"
-              className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl w-full sm:w-auto px-8 transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5"
+              className="group/btn bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl w-full sm:w-auto px-10 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
             >
               <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" download>
-                <Download className="w-4 h-4 mr-2" /> Download Resume (PDF)
+                <Download className="w-4 h-4 mr-2 group-hover/btn:animate-bounce" /> Download Resume (PDF)
               </a>
             </Button>
           </CardContent>
@@ -931,6 +1129,7 @@ function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [focusedField, setFocusedField] = useState(null);
   const sectionRef = useReveal();
 
   const handleSubmit = async (e) => {
@@ -961,7 +1160,7 @@ function ContactSection() {
   return (
     <section id="contact" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
       <SectionBg image={BG_IMAGES.contact} opacity={0.06} overlay="from-background via-background/95 to-background" />
-      <div className="absolute inset-0 mesh-gradient-2 opacity-50" />
+      <div className="absolute inset-0 mesh-gradient-3 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
@@ -976,7 +1175,7 @@ function ContactSection() {
           <div className="space-y-6 reveal-left">
             <h3 className="text-2xl sm:text-3xl font-bold">
               Let's work{' '}
-              <span className="gradient-text">together</span>
+              <span className="gradient-text-aurora">together</span>
             </h3>
             <p className="text-muted-foreground leading-relaxed">
               I'm always open to discussing new projects, creative ideas or opportunities to be part of your vision.
@@ -987,17 +1186,18 @@ function ContactSection() {
                 { icon: <MapPin className="w-5 h-5 text-indigo-400" />, bg: 'from-indigo-500/15 to-purple-500/15 border-indigo-500/20', label: 'Location', value: 'Rohtak, Haryana, India' },
                 { icon: <Github className="w-5 h-5 text-purple-400" />, bg: 'from-purple-500/15 to-pink-500/15 border-purple-500/20', label: 'GitHub', value: `github.com/${GITHUB_USERNAME}`, href: `https://github.com/${GITHUB_USERNAME}` },
                 { icon: <Linkedin className="w-5 h-5 text-blue-400" />, bg: 'from-blue-500/15 to-indigo-500/15 border-blue-500/20', label: 'LinkedIn', value: 'Sanu Kumar', href: LINKEDIN_URL },
-              ].map((item) => (
-                <Card key={item.label} className="glass hover-card-lift border-border/50 group">
+              ].map((item, i) => (
+                <Card key={item.label} className="glass-premium hover-card-lift border-border/50 group gradient-border" style={{ transitionDelay: `${i * 100}ms` }}>
                   <CardContent className="p-4 flex items-center gap-4">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${item.bg} border flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${item.bg} border flex-shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
                       {item.icon}
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wider">{item.label}</p>
                       {item.href ? (
-                        <a href={item.href} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary transition-colors">
+                        <a href={item.href} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary transition-colors inline-flex items-center gap-1 group/link">
                           {item.value}
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                         </a>
                       ) : (
                         <p className="font-medium text-sm">{item.value}</p>
@@ -1007,53 +1207,78 @@ function ContactSection() {
                 </Card>
               ))}
             </div>
+
+            {/* Quick connect buttons */}
+            <div className="flex items-center gap-3 pt-4">
+              <p className="text-sm text-muted-foreground">Quick connect:</p>
+              {[
+                { icon: <Github className="w-5 h-5" />, href: `https://github.com/${GITHUB_USERNAME}`, label: 'GitHub', color: 'hover:text-white hover:bg-gray-800' },
+                { icon: <Linkedin className="w-5 h-5" />, href: LINKEDIN_URL, label: 'LinkedIn', color: 'hover:text-white hover:bg-blue-600' },
+              ].map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-xl glass text-muted-foreground ${link.color} transition-all duration-300 hover:scale-110 hover:shadow-lg`}
+                  aria-label={link.label}
+                >
+                  {link.icon}
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Contact Form */}
-          <Card className="glass border-border/50 overflow-hidden reveal-right">
-            <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <Card className="glass-premium border-border/50 overflow-hidden reveal-right gradient-border">
+            <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
             <CardContent className="p-6 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Name</label>
-                  <Input
-                    placeholder="Your name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    required
-                    className="bg-background/50 rounded-xl border-border/50 focus:border-primary/50 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    required
-                    className="bg-background/50 rounded-xl border-border/50 focus:border-primary/50 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block text-muted-foreground">Message</label>
+                {[
+                  { id: 'name', label: 'Name', type: 'text', placeholder: 'Your name', value: form.name, icon: <Users className="w-4 h-4" /> },
+                  { id: 'email', label: 'Email', type: 'email', placeholder: 'your@email.com', value: form.email, icon: <Mail className="w-4 h-4" /> },
+                ].map((field) => (
+                  <div key={field.id} className="relative">
+                    <label className={`text-sm font-medium mb-2 flex items-center gap-2 transition-colors ${focusedField === field.id ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {field.icon}
+                      {field.label}
+                    </label>
+                    <Input
+                      type={field.type}
+                      placeholder={field.placeholder}
+                      value={field.value}
+                      onChange={(e) => setForm({ ...form, [field.id]: e.target.value })}
+                      onFocus={() => setFocusedField(field.id)}
+                      onBlur={() => setFocusedField(null)}
+                      required
+                      className="bg-background/50 rounded-xl border-border/50 focus:border-primary/50 transition-all duration-300 hover:border-primary/30"
+                    />
+                  </div>
+                ))}
+                <div className="relative">
+                  <label className={`text-sm font-medium mb-2 flex items-center gap-2 transition-colors ${focusedField === 'message' ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <Send className="w-4 h-4" />
+                    Message
+                  </label>
                   <textarea
                     placeholder="Tell me about your project..."
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    onFocus={() => setFocusedField('message')}
+                    onBlur={() => setFocusedField(null)}
                     required
                     rows={5}
-                    className="w-full rounded-xl border border-border/50 bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none transition-colors focus:border-primary/50"
+                    className="w-full rounded-xl border border-border/50 bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none transition-all duration-300 focus:border-primary/50 hover:border-primary/30"
                   />
                 </div>
 
                 {status === 'success' && (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-2">
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm flex items-center gap-2 animate-scale-in">
                     <Sparkles className="w-4 h-4" /> Message sent successfully! I'll get back to you soon.
                   </div>
                 )}
                 {status === 'error' && (
-                  <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                  <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm animate-scale-in">
                     {errorMsg}
                   </div>
                 )}
@@ -1062,12 +1287,15 @@ function ContactSection() {
                   type="submit"
                   disabled={status === 'sending'}
                   size="lg"
-                  className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5"
+                  className="group w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white shadow-xl shadow-indigo-500/20 rounded-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                 >
                   {status === 'sending' ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
                   ) : (
-                    <><Send className="w-4 h-4 mr-2" /> Send Message</>
+                    <>
+                      <Send className="w-4 h-4 mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                      Send Message
+                    </>
                   )}
                 </Button>
               </form>
@@ -1089,24 +1317,38 @@ function Footer() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
-            <a href="#home" className="text-xl font-bold gradient-text-blue tracking-tight">
+            <a href="#home" className="text-xl font-bold gradient-text-aurora tracking-tight hover:scale-105 inline-block transition-transform">
               &lt;SK /&gt;
             </a>
             <p className="text-sm text-muted-foreground mt-1">Aspiring Software Developer</p>
           </div>
 
+          {/* Footer nav */}
+          <div className="hidden md:flex items-center gap-6">
+            {['Home', 'About', 'Skills', 'Projects', 'Resume', 'Contact'].map((link) => (
+              <a
+                key={link}
+                href={`#${link.toLowerCase()}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors hover:-translate-y-0.5 inline-block"
+              >
+                {link}
+              </a>
+            ))}
+          </div>
+
           <div className="flex items-center gap-3">
             {[
-              { icon: <Github className="w-5 h-5" />, href: `https://github.com/${GITHUB_USERNAME}` },
-              { icon: <Linkedin className="w-5 h-5" />, href: LINKEDIN_URL },
-              { icon: <Mail className="w-5 h-5" />, href: '#contact' },
-            ].map((link, i) => (
+              { icon: <Github className="w-5 h-5" />, href: `https://github.com/${GITHUB_USERNAME}`, label: 'GitHub' },
+              { icon: <Linkedin className="w-5 h-5" />, href: LINKEDIN_URL, label: 'LinkedIn' },
+              { icon: <Mail className="w-5 h-5" />, href: '#contact', label: 'Email' },
+            ].map((link) => (
               <a
-                key={i}
+                key={link.label}
                 href={link.href}
                 target={link.href.startsWith('http') ? '_blank' : undefined}
                 rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="p-2.5 rounded-xl glass text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 hover:scale-110"
+                className="p-2.5 rounded-xl glass text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-300 hover:scale-110 hover:-translate-y-1"
+                aria-label={link.label}
               >
                 {link.icon}
               </a>
@@ -1121,7 +1363,7 @@ function Footer() {
             &copy; {new Date().getFullYear()} Sanu Kumar. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-            Made with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> using Next.js & Tailwind CSS
+            Made with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-pulse" /> using Next.js & Tailwind CSS
           </p>
         </div>
       </div>
@@ -1144,9 +1386,9 @@ function ScrollToTop() {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="fixed bottom-6 right-6 z-50 p-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/25 hover:scale-110 transition-all duration-300 animate-fade-in"
+      className="fixed bottom-6 right-6 z-50 p-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/25 hover:scale-110 hover:-translate-y-1 transition-all duration-300 animate-slide-up group"
     >
-      <ArrowUp className="w-5 h-5" />
+      <ArrowUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
     </button>
   );
 }
@@ -1161,7 +1403,7 @@ function App() {
   }, [darkMode]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-500 noise-overlay">
       <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
       <HeroSection />
       <AboutSection />
