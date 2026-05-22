@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import emailjs from '@emailjs/browser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -709,6 +710,84 @@ function SkillsSection() {
 }
 
 // ===================== PROJECTS SECTION =====================
+
+// Static fallback data — shown when GitHub API is rate-limited or unavailable
+const FALLBACK_REPOS = [
+  {
+    id: '1233327421',
+    name: 'skills-copilot-codespaces-vscode',
+    description: 'GitHub Copilot skills project using Codespaces and VS Code',
+    language: 'JavaScript',
+    html_url: `https://github.com/${GITHUB_USERNAME}/skills-copilot-codespaces-vscode`,
+    homepage: null,
+    stars: 0, forks: 0, watchers: 0, open_issues: 0, size: 0,
+    default_branch: 'main',
+    created_at: '2026-05-08T20:54:20Z',
+    updated_at: '2026-05-08T20:54:21Z',
+    pushed_at: '2026-05-08T20:54:21Z',
+    topics: ['github-copilot', 'vscode', 'codespaces'],
+    fork: false, archived: false, visibility: 'public'
+  },
+  {
+    id: '1230569004',
+    name: 'sanumaurya4u.github.io',
+    description: 'Personal portfolio website hosted on GitHub Pages',
+    language: 'HTML',
+    html_url: `https://github.com/${GITHUB_USERNAME}/sanumaurya4u.github.io`,
+    homepage: `https://${GITHUB_USERNAME}.github.io`,
+    stars: 0, forks: 0, watchers: 0, open_issues: 0, size: 1,
+    default_branch: 'main',
+    created_at: '2026-05-06T05:54:50Z',
+    updated_at: '2026-05-06T05:54:54Z',
+    pushed_at: '2026-05-06T05:54:52Z',
+    topics: ['portfolio', 'github-pages'],
+    fork: false, archived: false, visibility: 'public'
+  },
+  {
+    id: '1084036437',
+    name: 'Sci_cal_proj',
+    description: 'Scientific calculator project with advanced mathematical operations',
+    language: 'PowerShell',
+    html_url: `https://github.com/${GITHUB_USERNAME}/Sci_cal_proj`,
+    homepage: null,
+    stars: 0, forks: 0, watchers: 0, open_issues: 0, size: 64,
+    default_branch: 'main',
+    created_at: '2025-10-27T06:03:54Z',
+    updated_at: '2025-10-27T06:49:57Z',
+    pushed_at: '2025-10-27T06:49:53Z',
+    topics: ['calculator', 'powershell'],
+    fork: false, archived: false, visibility: 'public'
+  },
+  {
+    id: '985656422',
+    name: 'techmaurya-demo',
+    description: 'This is my first Git Repository — a learning demo project',
+    language: 'JavaScript',
+    html_url: `https://github.com/${GITHUB_USERNAME}/techmaurya-demo`,
+    homepage: null,
+    stars: 0, forks: 0, watchers: 0, open_issues: 0, size: 2,
+    default_branch: 'main',
+    created_at: '2025-05-18T08:43:14Z',
+    updated_at: '2025-05-18T08:51:41Z',
+    pushed_at: '2025-05-18T08:51:38Z',
+    topics: ['demo', 'learning'],
+    fork: false, archived: false, visibility: 'public'
+  },
+];
+
+const FALLBACK_PROFILE = {
+  avatar_url: 'https://avatars.githubusercontent.com/u/202846918?v=4',
+  name: 'Sanu Maurya',
+  bio: '',
+  public_repos: 4,
+  followers: 1,
+  following: 1,
+  location: '',
+  blog: '',
+  html_url: `https://github.com/${GITHUB_USERNAME}`,
+  created_at: '2025-03-11T18:54:26Z'
+};
+
 function ProjectsSection() {
   const [repos, setRepos] = useState([]);
   const [profile, setProfile] = useState(null);
@@ -722,29 +801,101 @@ function ProjectsSection() {
 
   useEffect(() => { fetchProjects(false); }, []);
 
+  const applyRepoData = (repoList, profileData, source, cacheTime) => {
+    const nonForked = (repoList || []).filter(r => !r.fork);
+    setRepos(nonForked);
+    setProfile(profileData || null);
+    setDataSource(source);
+    setCachedAt(cacheTime || '');
+    const langs = ['All', ...new Set(nonForked.map(r => r.language).filter(l => l && l !== 'Unknown'))];
+    setLanguages(langs);
+  };
+
   const fetchProjects = async (forceRefresh = false) => {
     try {
       if (forceRefresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
 
-      const url = `/api/github?username=${GITHUB_USERNAME}${forceRefresh ? '&refresh=true' : ''}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      // Try 1: Our own API route (which has caching + fallback logic)
+      try {
+        const url = `/api/github?username=${GITHUB_USERNAME}${forceRefresh ? '&refresh=true' : ''}`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-      if (data.success) {
-        const nonForked = (data.repos || []).filter(r => !r.fork);
-        setRepos(nonForked);
-        setProfile(data.profile || null);
-        setDataSource(data.source || 'unknown');
-        setCachedAt(data.cached_at || '');
-        const langs = ['All', ...new Set(nonForked.map(r => r.language).filter(l => l && l !== 'Unknown'))];
-        setLanguages(langs);
-      } else {
-        setError(data.error || 'Failed to fetch projects');
+        if (data.success && data.repos && data.repos.length > 0) {
+          applyRepoData(data.repos, data.profile, data.source || 'live', data.cached_at);
+          return;
+        }
+      } catch (apiErr) {
+        console.warn('API route failed, trying direct GitHub fetch:', apiErr.message);
       }
+
+      // Try 2: Direct GitHub API call from the browser (separate rate limit from server)
+      try {
+        const [profileRes, reposRes] = await Promise.all([
+          fetch(`https://api.github.com/users/${GITHUB_USERNAME}`, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+          }),
+          fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=30&type=owner`, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' }
+          })
+        ]);
+
+        if (reposRes.ok) {
+          const reposData = await reposRes.json();
+          let profileData = null;
+          if (profileRes.ok) {
+            const p = await profileRes.json();
+            profileData = {
+              avatar_url: p.avatar_url,
+              name: p.name || GITHUB_USERNAME,
+              bio: p.bio || '',
+              public_repos: p.public_repos,
+              followers: p.followers,
+              following: p.following,
+              location: p.location || '',
+              blog: p.blog || '',
+              html_url: p.html_url,
+              created_at: p.created_at
+            };
+          }
+          const formatted = reposData.map(repo => ({
+            id: repo.id.toString(),
+            name: repo.name,
+            description: repo.description || 'No description available',
+            language: repo.language || 'Unknown',
+            html_url: repo.html_url,
+            homepage: repo.homepage || null,
+            stars: repo.stargazers_count,
+            forks: repo.forks_count,
+            watchers: repo.watchers_count || 0,
+            open_issues: repo.open_issues_count || 0,
+            size: repo.size || 0,
+            default_branch: repo.default_branch || 'main',
+            created_at: repo.created_at,
+            updated_at: repo.updated_at,
+            pushed_at: repo.pushed_at,
+            topics: repo.topics || [],
+            fork: repo.fork,
+            archived: repo.archived || false,
+            visibility: repo.visibility || 'public'
+          }));
+          applyRepoData(formatted, profileData, 'direct', new Date().toISOString());
+          return;
+        }
+      } catch (directErr) {
+        console.warn('Direct GitHub API failed, using fallback:', directErr.message);
+      }
+
+      // Try 3: Static fallback data — always available, no network needed
+      console.log('Using static fallback project data');
+      applyRepoData(FALLBACK_REPOS, FALLBACK_PROFILE, 'fallback', new Date().toISOString());
+
     } catch (err) {
-      setError('Failed to fetch projects. Please try again later.');
+      // Even the ultimate fallback — use static data
+      console.error('All fetch methods failed:', err);
+      applyRepoData(FALLBACK_REPOS, FALLBACK_PROFILE, 'fallback', new Date().toISOString());
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -862,22 +1013,24 @@ function ProjectsSection() {
                     </button>
                     <Badge
                       className={`text-xs px-3 py-1 ${
-                        dataSource === 'live'
+                        dataSource === 'live' || dataSource === 'direct'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : dataSource === 'cache'
                           ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          : dataSource === 'fallback'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                           : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}
                     >
                       <span className="relative flex h-1.5 w-1.5 mr-1.5">
                         <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                          dataSource === 'live' ? 'bg-emerald-400' : dataSource === 'cache' ? 'bg-blue-400' : 'bg-amber-400'
+                          dataSource === 'live' || dataSource === 'direct' ? 'bg-emerald-400' : dataSource === 'cache' ? 'bg-blue-400' : dataSource === 'fallback' ? 'bg-purple-400' : 'bg-amber-400'
                         }`}></span>
                         <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
-                          dataSource === 'live' ? 'bg-emerald-500' : dataSource === 'cache' ? 'bg-blue-500' : 'bg-amber-500'
+                          dataSource === 'live' || dataSource === 'direct' ? 'bg-emerald-500' : dataSource === 'cache' ? 'bg-blue-500' : dataSource === 'fallback' ? 'bg-purple-500' : 'bg-amber-500'
                         }`}></span>
                       </span>
-                      {dataSource === 'live' ? 'Live' : dataSource === 'cache' ? 'Cached' : 'Stale'}
+                      {dataSource === 'live' ? 'Live' : dataSource === 'direct' ? 'Direct' : dataSource === 'cache' ? 'Cached' : dataSource === 'fallback' ? 'Offline' : 'Stale'}
                     </Badge>
                   </div>
                 </div>
@@ -1125,33 +1278,44 @@ function ResumeSection() {
 }
 
 // ===================== CONTACT SECTION =====================
+// EmailJS Configuration — update these with your credentials from emailjs.com
+const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'YOUR_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'YOUR_TEMPLATE_ID';
+const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || 'YOUR_PUBLIC_KEY';
+
 function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [focusedField, setFocusedField] = useState(null);
   const sectionRef = useReveal();
+  const formRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('sending');
     setErrorMsg('');
+
     try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStatus('success');
-        setForm({ name: '', email: '', message: '' });
-        setTimeout(() => setStatus(null), 5000);
-      } else {
-        setStatus('error');
-        setErrorMsg(data.error || 'Something went wrong');
-      }
+      const templateParams = {
+        from_name: form.name,
+        from_email: form.email,
+        message: form.message,
+        to_name: 'Sanu Kumar',
+      };
+
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams,
+        EMAILJS_PUBLIC_KEY
+      );
+
+      setStatus('success');
+      setForm({ name: '', email: '', message: '' });
+      setTimeout(() => setStatus(null), 5000);
     } catch (err) {
+      console.error('EmailJS error:', err);
       setStatus('error');
       setErrorMsg('Failed to send message. Please try again.');
     }
