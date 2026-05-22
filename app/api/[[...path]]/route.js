@@ -63,23 +63,34 @@ async function handleGitHubRepos(request) {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('username') || 'sanumaurya4u';
     const forceRefresh = searchParams.get('refresh') === 'true';
-    const { db } = await connectToDatabase();
+    
+    let db = null;
+    try {
+      const conn = await connectToDatabase();
+      db = conn.db;
+    } catch (e) {
+      console.log('MongoDB not available, will fetch directly from GitHub');
+    }
 
-    // Check cache first (unless force refresh)
-    if (!forceRefresh) {
-      const cached = await db.collection('github_cache').findOne({ username });
-      if (cached) {
-        const cacheAge = Date.now() - new Date(cached.cached_at).getTime();
-        if (cacheAge < CACHE_TTL_MS) {
-          return NextResponse.json({
-            success: true,
-            repos: cached.repos,
-            profile: cached.profile || null,
-            source: 'cache',
-            cached_at: cached.cached_at,
-            cache_age_seconds: Math.floor(cacheAge / 1000)
-          }, { headers: corsHeaders() });
+    // Check cache first (unless force refresh) — only if DB is available
+    if (db && !forceRefresh) {
+      try {
+        const cached = await db.collection('github_cache').findOne({ username });
+        if (cached) {
+          const cacheAge = Date.now() - new Date(cached.cached_at).getTime();
+          if (cacheAge < CACHE_TTL_MS) {
+            return NextResponse.json({
+              success: true,
+              repos: cached.repos,
+              profile: cached.profile || null,
+              source: 'cache',
+              cached_at: cached.cached_at,
+              cache_age_seconds: Math.floor(cacheAge / 1000)
+            }, { headers: corsHeaders() });
+          }
         }
+      } catch (e) {
+        console.log('Cache read failed:', e.message);
       }
     }
 
@@ -131,7 +142,7 @@ async function handleGitHubRepos(request) {
       } catch (e) { console.log('Search API failed:', e.message); }
     }
 
-    // Update cache if we got fresh data
+    // Update cache if we got fresh data and DB is available
     if (formattedRepos) {
       const cacheData = {
         username,
@@ -139,11 +150,19 @@ async function handleGitHubRepos(request) {
         profile: profileData,
         cached_at: new Date().toISOString()
       };
-      await db.collection('github_cache').updateOne(
-        { username },
-        { $set: cacheData },
-        { upsert: true }
-      );
+      
+      if (db) {
+        try {
+          await db.collection('github_cache').updateOne(
+            { username },
+            { $set: cacheData },
+            { upsert: true }
+          );
+        } catch (e) {
+          console.log('Cache write failed:', e.message);
+        }
+      }
+      
       return NextResponse.json({
         success: true,
         repos: formattedRepos,
@@ -153,16 +172,22 @@ async function handleGitHubRepos(request) {
       }, { headers: corsHeaders() });
     }
 
-    // Both APIs failed - serve stale cache
-    const staleCache = await db.collection('github_cache').findOne({ username });
-    if (staleCache) {
-      return NextResponse.json({
-        success: true,
-        repos: staleCache.repos,
-        profile: staleCache.profile || null,
-        source: 'stale_cache',
-        cached_at: staleCache.cached_at
-      }, { headers: corsHeaders() });
+    // Both APIs failed - try stale cache if DB available
+    if (db) {
+      try {
+        const staleCache = await db.collection('github_cache').findOne({ username });
+        if (staleCache) {
+          return NextResponse.json({
+            success: true,
+            repos: staleCache.repos,
+            profile: staleCache.profile || null,
+            source: 'stale_cache',
+            cached_at: staleCache.cached_at
+          }, { headers: corsHeaders() });
+        }
+      } catch (e) {
+        console.log('Stale cache read failed:', e.message);
+      }
     }
 
     return NextResponse.json(
