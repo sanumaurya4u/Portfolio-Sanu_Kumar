@@ -1281,6 +1281,7 @@ function ResumeSection() {
 // EmailJS Configuration — update these with your credentials from emailjs.com
 const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || 'YOUR_SERVICE_ID';
 const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || 'YOUR_TEMPLATE_ID';
+const EMAILJS_AUTO_REPLY_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_AUTO_REPLY_TEMPLATE_ID || '';
 const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || 'YOUR_PUBLIC_KEY';
 
 function ContactSection() {
@@ -1310,6 +1311,29 @@ function ContactSection() {
         templateParams,
         EMAILJS_PUBLIC_KEY
       );
+
+      // Send auto-reply to the user if an auto-reply template is configured
+      // Note: You can also configure auto-reply directly inside your primary template on the EmailJS dashboard
+      if (EMAILJS_AUTO_REPLY_TEMPLATE_ID) {
+        const autoReplyParams = {
+          to_name: form.name,
+          to_email: form.email,
+          message: form.message,
+          reply_message: "Thank you for reaching out! I have received your message and will get back to you as soon as possible."
+        };
+        
+        try {
+          await emailjs.send(
+            EMAILJS_SERVICE_ID,
+            EMAILJS_AUTO_REPLY_TEMPLATE_ID,
+            autoReplyParams,
+            EMAILJS_PUBLIC_KEY
+          );
+        } catch (autoReplyErr) {
+          console.warn('Auto-reply failed to send:', autoReplyErr);
+          // We don't throw here because the main message was already sent successfully
+        }
+      }
 
       setStatus('success');
       setForm({ name: '', email: '', message: '' });

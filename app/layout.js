@@ -5,6 +5,9 @@ export const metadata = {
   description: 'Portfolio of Sanu Kumar - B.Tech CSE student at UIET-MDU Rohtak, Full Stack Web Developer, DSA Enthusiast, and Freelancer. Explore my projects, skills, and get in touch.',
   keywords: ['Sanu Kumar', 'Portfolio', 'Full Stack Developer', 'B.Tech CSE', 'Web Developer', 'React', 'Next.js', 'Python', 'Java', 'C++'],
   authors: [{ name: 'Sanu Kumar' }],
+  icons: {
+    icon: '/portfolio_icon.svg.svg',
+  },
   openGraph: {
     title: 'Sanu Kumar | Portfolio',
     description: 'B.Tech CSE Student & Full Stack Developer',
