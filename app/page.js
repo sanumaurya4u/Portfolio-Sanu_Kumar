@@ -18,7 +18,7 @@ import {
 
 const GITHUB_USERNAME = 'sanumaurya4u';
 const LINKEDIN_URL = 'https://www.linkedin.com/in/sanu-kumar-91619b233';
-const RESUME_URL = '/Sanu_Resume (2).pdf';
+const RESUME_URL = '/Sanu_Resume (3).pdf';
 const PROFILE_IMAGE = 'https://customer-assets.emergentagent.com/job_cse-portfolio-39/artifacts/609ekhyr_IMG_20260130_222658.jpg';
 
 // Section background images
