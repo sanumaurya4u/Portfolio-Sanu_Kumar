@@ -18,7 +18,7 @@ import {
 
 const GITHUB_USERNAME = 'sanumaurya4u';
 const LINKEDIN_URL = 'https://www.linkedin.com/in/sanu-kumar-91619b233';
-const RESUME_URL = 'https://customer-assets.emergentagent.com/job_cb536e5c-c6ff-4e60-9732-e9af9a31c485/artifacts/nhp0mich_Profile%20%284%29.pdf';
+const RESUME_URL = '/Sanu_Resume(2).pdf';
 const PROFILE_IMAGE = 'https://customer-assets.emergentagent.com/job_cse-portfolio-39/artifacts/609ekhyr_IMG_20260130_222658.jpg';
 
 // Section background images
@@ -193,7 +193,7 @@ function Navbar({ darkMode, setDarkMode }) {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
       setScrollProgress(totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0);
 
-      const sections = ['home', 'about', 'skills', 'projects', 'resume', 'contact'];
+      const sections = ['home', 'about', 'skills', 'experience', 'projects', 'ai', 'certifications', 'resume', 'contact'];
       for (const section of sections.reverse()) {
         const el = document.getElementById(section);
         if (el && window.scrollY >= el.offsetTop - 200) {
@@ -210,7 +210,10 @@ function Navbar({ darkMode, setDarkMode }) {
     { name: 'Home', href: '#home', icon: <Monitor className="w-3.5 h-3.5" /> },
     { name: 'About', href: '#about', icon: <BookOpen className="w-3.5 h-3.5" /> },
     { name: 'Skills', href: '#skills', icon: <Cpu className="w-3.5 h-3.5" /> },
+    { name: 'Experience', href: '#experience', icon: <Briefcase className="w-3.5 h-3.5" /> },
     { name: 'Projects', href: '#projects', icon: <Folder className="w-3.5 h-3.5" /> },
+    { name: 'AI', href: '#ai', icon: <Sparkles className="w-3.5 h-3.5" /> },
+    { name: 'Certifications', href: '#certifications', icon: <Award className="w-3.5 h-3.5" /> },
     { name: 'Resume', href: '#resume', icon: <FileCode className="w-3.5 h-3.5" /> },
     { name: 'Contact', href: '#contact', icon: <Mail className="w-3.5 h-3.5" /> },
   ];
@@ -312,10 +315,10 @@ function Navbar({ darkMode, setDarkMode }) {
 // ===================== HERO SECTION =====================
 function HeroSection() {
   const typedText = useTypewriter([
-    'Full Stack Web Developer',
-    'DSA Enthusiast',
-    'Freelancer',
+    'Full-Stack Developer',
+    'AI Automation Enthusiast',
     'UGC Creator',
+    'Freelancer',
   ], 80, 2000);
 
   const heroRef = useRef(null);
@@ -361,8 +364,7 @@ function HeroSection() {
             </div>
 
             <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed animate-fade-in-up animation-delay-300">
-              B.Tech CSE '28 at UIET, Maharshi Dayanand University, Rohtak.
-              Passionate about building elegant solutions through code.
+              Passionate about building scalable web applications with React, Node.js, Supabase, and AI Automation.
             </p>
 
             {/* CTA Buttons */}
@@ -524,15 +526,10 @@ function AboutSection() {
           {/* Bio */}
           <div className="space-y-6 reveal-left">
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Hello! I'm <span className="text-foreground font-semibold gradient-text">Sanu Kumar</span>, a technophile
-              pursuing CS Honours from UIET, Maharshi Dayanand University, Rohtak. I'm currently building
-              a strong foundation in programming with C and Python, and actively exploring the world of
-              web & app development.
+              Computer Science undergraduate with hands-on experience in full-stack web development using JavaScript, React, Node.js, Express.js, MongoDB, HTML, and CSS.
             </p>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              I'm deeply interested in solving real-world problems through efficient code and continuously
-              improving my skills in DSA and software engineering. Whether it's debugging code or designing
-              user-friendly websites, I enjoy the process of learning and growing with each project.
+              Passionate about building scalable web applications and eager to contribute as an entry-level Software or Full-Stack Developer with a passion for solving real-world problems. Actively learning Data Structures and Algorithms (DSA) to enhance coding and analytical skills.
             </p>
             <div className="flex flex-wrap gap-2 pt-2">
               {[
@@ -562,26 +559,19 @@ function AboutSection() {
                 icon: <GraduationCap className="w-6 h-6" />,
                 iconColor: 'text-indigo-400',
                 iconBg: 'from-indigo-500/15 to-purple-500/15 border-indigo-500/20',
-                title: 'Bachelor of Technology (B.Tech)',
-                subtitle: 'Computer Science Engineering',
+                title: 'B.Tech CSE',
+                subtitle: 'UIET',
                 subtitleColor: 'text-indigo-400',
-                details: ['Maharshi Dayanand University, Rohtak', 'UIET - University Institute of Engineering & Technology'],
-                badge: 'July 2024 - May 2028'
+                details: ['CGPA: 8.3'],
+                badge: '2024-2028'
               },
               {
-                icon: <MapPin className="w-6 h-6" />,
+                icon: <BookOpen className="w-6 h-6" />,
                 iconColor: 'text-emerald-400',
                 iconBg: 'from-emerald-500/15 to-teal-500/15 border-emerald-500/20',
-                title: 'Location',
-                details: ['Rohtak, Haryana, India']
-              },
-              {
-                icon: <Award className="w-6 h-6" />,
-                iconColor: 'text-amber-400',
-                iconBg: 'from-amber-500/15 to-orange-500/15 border-amber-500/20',
-                title: 'Certification',
-                details: ['Certificate of Completion - React & Redux']
-              },
+                title: 'Coursework',
+                details: ['Data Structures, OOP Concepts, Operating System, Domestic IT Assistant']
+              }
             ].map((card, i) => (
               <Card key={i} className="glass-premium hover-card-lift border-border/50 overflow-hidden group gradient-border" style={{ transitionDelay: `${i * 100}ms` }}>
                 <CardContent className="p-5 sm:p-6">
@@ -612,25 +602,40 @@ function AboutSection() {
 const skillsData = {
   'Programming Languages': [
     { name: 'C++', icon: <Terminal className="w-5 h-5" />, gradient: 'from-blue-500 to-blue-700', level: 85 },
-    { name: 'Java', icon: <Coffee className="w-5 h-5" />, gradient: 'from-red-500 to-orange-500', level: 75 },
-    { name: 'Python', icon: <Code2 className="w-5 h-5" />, gradient: 'from-yellow-500 to-green-500', level: 80 },
-    { name: 'JavaScript', icon: <FileCode className="w-5 h-5" />, gradient: 'from-yellow-400 to-yellow-600', level: 85 },
     { name: 'C', icon: <Terminal className="w-5 h-5" />, gradient: 'from-slate-500 to-slate-700', level: 70 },
+    { name: 'Python', icon: <Code2 className="w-5 h-5" />, gradient: 'from-yellow-500 to-green-500', level: 80 },
+    { name: 'SQL', icon: <Database className="w-5 h-5" />, gradient: 'from-blue-400 to-blue-600', level: 80 },
   ],
-  'Web Technologies': [
+  'Technologies/Frameworks': [
     { name: 'HTML5', icon: <Layout className="w-5 h-5" />, gradient: 'from-orange-500 to-red-500', level: 95 },
     { name: 'CSS3', icon: <Layout className="w-5 h-5" />, gradient: 'from-blue-400 to-blue-600', level: 90 },
-    { name: 'React', icon: <Code2 className="w-5 h-5" />, gradient: 'from-cyan-400 to-blue-500', level: 80 },
-    { name: 'Next.js', icon: <Globe className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800', level: 75 },
-    { name: 'Tailwind', icon: <Layout className="w-5 h-5" />, gradient: 'from-teal-400 to-cyan-500', level: 85 },
+    { name: 'React', icon: <Code2 className="w-5 h-5" />, gradient: 'from-cyan-400 to-blue-500', level: 85 },
+    { name: 'MongoDB', icon: <Database className="w-5 h-5" />, gradient: 'from-green-500 to-green-700', level: 80 },
+    { name: 'ExpressJS', icon: <Cpu className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800', level: 75 },
+    { name: 'NodeJS', icon: <Cpu className="w-5 h-5" />, gradient: 'from-green-400 to-green-600', level: 80 },
+    { name: 'Rest APIs', icon: <Globe className="w-5 h-5" />, gradient: 'from-purple-500 to-pink-500', level: 85 },
+    { name: 'Supabase', icon: <Database className="w-5 h-5" />, gradient: 'from-emerald-400 to-teal-500', level: 80 },
+    { name: 'Tailwind CSS', icon: <Layout className="w-5 h-5" />, gradient: 'from-teal-400 to-cyan-500', level: 90 },
+    { name: 'React Router', icon: <Code2 className="w-5 h-5" />, gradient: 'from-red-400 to-pink-500', level: 85 },
   ],
-  'Tools & Others': [
-    { name: 'Git & GitHub', icon: <Github className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800', level: 85 },
-    { name: 'MongoDB', icon: <Database className="w-5 h-5" />, gradient: 'from-green-500 to-green-700', level: 70 },
-    { name: 'Node.js', icon: <Cpu className="w-5 h-5" />, gradient: 'from-green-400 to-green-600', level: 75 },
-    { name: 'DSA', icon: <Terminal className="w-5 h-5" />, gradient: 'from-purple-500 to-pink-500', level: 80 },
-    { name: 'Responsive', icon: <Smartphone className="w-5 h-5" />, gradient: 'from-pink-400 to-rose-500', level: 90 },
+  'Developer Tools': [
+    { name: 'VS Code', icon: <Terminal className="w-5 h-5" />, gradient: 'from-blue-500 to-blue-700', level: 90 },
+    { name: 'Antigravity', icon: <Zap className="w-5 h-5" />, gradient: 'from-indigo-500 to-purple-500', level: 85 },
+    { name: 'Cursor', icon: <MousePointer2 className="w-5 h-5" />, gradient: 'from-gray-400 to-gray-600', level: 85 },
+    { name: 'Git', icon: <GitFork className="w-5 h-5" />, gradient: 'from-orange-500 to-red-500', level: 85 },
+    { name: 'GitHub', icon: <Github className="w-5 h-5" />, gradient: 'from-gray-500 to-gray-800', level: 85 },
+    { name: 'Vercel', icon: <Globe className="w-5 h-5" />, gradient: 'from-slate-800 to-black', level: 85 },
+    { name: 'Hostinger', icon: <Database className="w-5 h-5" />, gradient: 'from-purple-500 to-purple-700', level: 80 },
+    { name: 'n8n', icon: <Activity className="w-5 h-5" />, gradient: 'from-pink-500 to-rose-500', level: 80 },
   ],
+  'AI Automation': [
+    { name: 'NVIDIA AI Chatbot', icon: <Sparkles className="w-5 h-5" />, gradient: 'from-green-400 to-green-600', level: 85 },
+    { name: 'n8n', icon: <Activity className="w-5 h-5" />, gradient: 'from-pink-500 to-rose-500', level: 80 },
+    { name: 'WhatsApp AI Chatbot', icon: <Smartphone className="w-5 h-5" />, gradient: 'from-green-500 to-teal-500', level: 85 },
+    { name: 'Auto-post automation', icon: <RefreshCw className="w-5 h-5" />, gradient: 'from-blue-400 to-indigo-500', level: 80 },
+    { name: 'Prompt Engineering', icon: <Terminal className="w-5 h-5" />, gradient: 'from-yellow-400 to-orange-500', level: 90 },
+    { name: 'Stitch', icon: <Zap className="w-5 h-5" />, gradient: 'from-purple-500 to-indigo-500', level: 85 },
+  ]
 };
 
 function SkillCard({ skill, index }) {
@@ -1095,6 +1100,47 @@ function ProjectsSection() {
         {/* Project Cards */}
         {!loading && !error && (
           <>
+            {/* Pinned Alpha Home Tuition */}
+            <div className="mb-6 grid grid-cols-1">
+              <Card className="group glass-premium hover-card-lift border-primary/30 flex flex-col overflow-hidden animate-fade-in-up gradient-border relative shadow-lg shadow-primary/10 max-w-sm sm:max-w-none mx-auto sm:mx-0 w-full lg:w-[calc(33.333%-13px)]">
+                <div className="absolute top-0 right-0 p-2">
+                  <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] px-2 py-0.5 shadow-sm">Pinned</Badge>
+                </div>
+                <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2 min-w-0 pt-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 flex-shrink-0">
+                        <Folder className="w-4 h-4 text-emerald-500" />
+                      </div>
+                      <CardTitle className="text-base sm:text-lg truncate group-hover:text-emerald-500 transition-colors duration-300">
+                        Alpha Home Tuition
+                      </CardTitle>
+                    </div>
+                  </div>
+                  <CardDescription className="line-clamp-2 mt-2 text-sm leading-relaxed">
+                    A comprehensive platform built for Alpha Home Tuition.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="mt-auto pt-0 space-y-3">
+                  <div className="flex items-center flex-wrap gap-3">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="w-3 h-3 rounded-full ring-2 ring-offset-1 ring-offset-background bg-cyan-400 ring-cyan-400" />
+                      React
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground/70 pt-1 border-t border-border/30">
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 2026</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {['React', 'Supabase', 'Tailwind CSS', 'React Router', 'NVIDIA AI Chatbot'].map(t => (
+                      <Badge key={t} className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">{t}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             {filteredRepos.length === 0 ? (
               <div className="text-center py-16">
                 <Folder className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
@@ -1214,6 +1260,169 @@ function ProjectsSection() {
             </div>
           </>
         )}
+      </div>
+    </section>
+  );
+}
+
+// ===================== EXPERIENCE SECTION =====================
+function ExperienceSection() {
+  const sectionRef = useReveal();
+
+  return (
+    <section id="experience" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.about} opacity={0.05} overlay="from-background via-background/95 to-background" />
+      <div className="absolute inset-0 mesh-gradient-2 opacity-30" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="My Experience"
+          icon={<Briefcase className="w-3.5 h-3.5" />}
+          title="Experience"
+          subtitle="My professional journey and freelance work"
+        />
+
+        <div className="max-w-4xl mx-auto space-y-8 reveal-scale">
+          <Card className="glass-premium border-border/50 overflow-hidden gradient-border group">
+            <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 group-hover:h-1.5 transition-all duration-300" />
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold">Freelancer - Frontend Developer</h3>
+                  <p className="text-primary font-medium mt-1">ParivartanX</p>
+                </div>
+                <Badge variant="outline" className="border-primary/20 bg-primary/5">March 2026 &middot; Remote</Badge>
+              </div>
+              
+              <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>Developed responsive web app using React & Tailwind.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>Integrated React Router for seamless navigation.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>Ensured cross-device compatibility for optimal user experience.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>Used Google's advanced tool like Stitch to enhance productivity.</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ===================== AI AUTOMATION SECTION =====================
+function AiAutomationSection() {
+  const sectionRef = useReveal();
+
+  return (
+    <section id="ai" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.skills} opacity={0.06} overlay="from-background via-background/95 to-background" />
+      <div className="absolute inset-0 mesh-gradient-3 opacity-30" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="AI & Automation"
+          icon={<Sparkles className="w-3.5 h-3.5" />}
+          title="AI & Automation"
+          subtitle="Leveraging AI and automation tools to streamline workflows and create intelligent solutions"
+        />
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 reveal-scale">
+          {[
+            { title: 'Production Dashboards', desc: 'Built production-level dashboards.', icon: <Layout className="w-6 h-6 text-indigo-400" />, bg: 'from-indigo-500/15 to-purple-500/15' },
+            { title: 'UGC Creator', desc: 'UGC creator for ParivartanX.', icon: <Globe className="w-6 h-6 text-emerald-400" />, bg: 'from-emerald-500/15 to-teal-500/15' },
+            { title: 'Prompt Engineering', desc: 'Improved AI interactions through advanced prompt engineering.', icon: <Terminal className="w-6 h-6 text-amber-400" />, bg: 'from-amber-500/15 to-orange-500/15' },
+            { title: 'AI Workshops', desc: 'Conducted AI workshops to educate and empower.', icon: <Users className="w-6 h-6 text-pink-400" />, bg: 'from-pink-500/15 to-rose-500/15' },
+            { title: 'WhatsApp AI Chatbot', desc: 'Developed WhatsApp AI Chatbot for restaurants.', icon: <Smartphone className="w-6 h-6 text-cyan-400" />, bg: 'from-cyan-500/15 to-blue-500/15' },
+            { title: 'Auto-Post Automation', desc: 'Created auto-post automation for Facebook, Instagram, and LinkedIn.', icon: <RefreshCw className="w-6 h-6 text-purple-400" />, bg: 'from-purple-500/15 to-indigo-500/15' },
+          ].map((item, i) => (
+            <Card key={i} className="glass-premium hover-card-lift border-border/50 group gradient-border">
+              <CardContent className="p-6">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.bg} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                  {item.icon}
+                </div>
+                <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ===================== CERTIFICATIONS SECTION =====================
+function CertificationsSection() {
+  const sectionRef = useReveal();
+
+  return (
+    <section id="certifications" className="py-24 sm:py-32 relative overflow-hidden" ref={sectionRef}>
+      <SectionBg image={BG_IMAGES.about} opacity={0.05} overlay="from-background via-background/95 to-background" />
+      <div className="absolute inset-0 mesh-gradient-1 opacity-30" />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <SectionHeading
+          badge="Achievements"
+          icon={<Award className="w-3.5 h-3.5" />}
+          title="Certifications & Achievements"
+          subtitle="Milestones and recognitions throughout my journey"
+        />
+
+        <div className="grid lg:grid-cols-2 gap-12">
+          <div className="space-y-6 reveal-left">
+            <h3 className="text-2xl font-bold flex items-center gap-3">
+              <Award className="w-6 h-6 text-primary" /> Certifications
+            </h3>
+            <div className="space-y-4">
+              {[
+                'Idea Pitching (UIET MDU Rohtak)',
+                'Frontend Development (Knowledge Gate)',
+                'Prompt Engineering (Microsoft & SkillUp)',
+                'Learning Python (Infosys)',
+                'Data Science (IIT Madras)'
+              ].map((cert, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-xl glass-premium border border-border/50 group hover:border-primary/30 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Award className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="font-medium">{cert}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-6 reveal-right">
+            <h3 className="text-2xl font-bold flex items-center gap-3">
+              <Trophy className="w-6 h-6 text-amber-400" /> Achievements
+            </h3>
+            <div className="space-y-4">
+              {[
+                'Built multiple production-level dashboards',
+                'UGC creator for ParivartanX',
+                'SIH-2025 Team Leader',
+                'Prompt Engineer'
+              ].map((ach, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-xl glass-premium border border-border/50 group hover:border-amber-400/30 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-amber-400/10 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <p className="font-medium">{ach}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -1596,7 +1805,10 @@ function App() {
       <HeroSection />
       <AboutSection />
       <SkillsSection />
+      <ExperienceSection />
       <ProjectsSection />
+      <AiAutomationSection />
+      <CertificationsSection />
       <ResumeSection />
       <ContactSection />
       <Footer />
