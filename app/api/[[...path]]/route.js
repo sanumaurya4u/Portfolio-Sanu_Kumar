@@ -101,29 +101,67 @@ async function handleGitHubRepos(request) {
         fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30&type=owner`, fetchOptions)
       ]);
 
-      if (profileRes.ok) {
-        const p = await profileRes.json();
-        profileData = {
-          avatar_url: p.avatar_url,
-          name: p.name || username,
-          bio: p.bio || '',
-          public_repos: p.public_repos,
-          followers: p.followers,
-          following: p.following,
-          location: p.location || '',
-          blog: p.blog || '',
-          html_url: p.html_url,
-          created_at: p.created_at
+      // If token is invalid or expired (401 Bad credentials), fallback to unauthenticated request
+      if ((profileRes && profileRes.status === 401) || (reposRes && reposRes.status === 401)) {
+        console.warn('GitHub token rejected with 401 Unauthorized. Retrying with unauthenticated public request...');
+        const publicHeaders = {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Portfolio-App'
         };
-      } else {
-        console.log('GitHub profile API returned:', profileRes.status);
-      }
+        const publicOptions = forceRefresh 
+          ? { headers: publicHeaders, cache: 'no-store' }
+          : { headers: publicHeaders, next: { revalidate: 3600 } };
 
-      if (reposRes.ok) {
-        const repos = await reposRes.json();
-        formattedRepos = repos.map(formatRepo);
+        const [retryProfileRes, retryReposRes] = await Promise.all([
+          fetch(`https://api.github.com/users/${username}`, publicOptions),
+          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30&type=owner`, publicOptions)
+        ]);
+
+        if (retryProfileRes.ok) {
+          const p = await retryProfileRes.json();
+          profileData = {
+            avatar_url: p.avatar_url,
+            name: p.name || username,
+            bio: p.bio || '',
+            public_repos: p.public_repos,
+            followers: p.followers,
+            following: p.following,
+            location: p.location || '',
+            blog: p.blog || '',
+            html_url: p.html_url,
+            created_at: p.created_at
+          };
+        }
+
+        if (retryReposRes.ok) {
+          const repos = await retryReposRes.json();
+          formattedRepos = repos.map(formatRepo);
+        }
       } else {
-        console.log('GitHub repos API returned:', reposRes.status);
+        if (profileRes.ok) {
+          const p = await profileRes.json();
+          profileData = {
+            avatar_url: p.avatar_url,
+            name: p.name || username,
+            bio: p.bio || '',
+            public_repos: p.public_repos,
+            followers: p.followers,
+            following: p.following,
+            location: p.location || '',
+            blog: p.blog || '',
+            html_url: p.html_url,
+            created_at: p.created_at
+          };
+        } else {
+          console.log('GitHub profile API returned:', profileRes.status);
+        }
+
+        if (reposRes.ok) {
+          const repos = await reposRes.json();
+          formattedRepos = repos.map(formatRepo);
+        } else {
+          console.log('GitHub repos API returned:', reposRes.status);
+        }
       }
     } catch (e) {
       console.log('GitHub API fetch failed:', e.message);
@@ -132,14 +170,21 @@ async function handleGitHubRepos(request) {
     // Fallback: search API (separate rate limit)
     if (!formattedRepos) {
       try {
-        const fetchOptions = forceRefresh 
-          ? { headers: GITHUB_HEADERS, cache: 'no-store' }
-          : { headers: GITHUB_HEADERS, next: { revalidate: 3600 } };
-          
-        const response = await fetch(
+        const publicHeaders = {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Portfolio-App'
+        };
+        const searchHeaders = GITHUB_TOKEN ? GITHUB_HEADERS : publicHeaders;
+        let response = await fetch(
           `https://api.github.com/search/repositories?q=user:${username}&sort=updated&per_page=30`,
-          fetchOptions
+          { headers: searchHeaders, cache: 'no-store' }
         );
+        if (response.status === 401) {
+          response = await fetch(
+            `https://api.github.com/search/repositories?q=user:${username}&sort=updated&per_page=30`,
+            { headers: publicHeaders, cache: 'no-store' }
+          );
+        }
         if (response.ok) {
           const data = await response.json();
           formattedRepos = (data.items || []).map(formatRepo);
