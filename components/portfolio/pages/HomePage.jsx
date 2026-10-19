@@ -28,8 +28,8 @@ export default function HomePage() {
       description:
         'Official website of the Entrepreneurship Cell that showcases events, team, and startup resources with interactive animations.',
       topics: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Supabase', 'GSAP'],
-      github: 'https://github.com/sanumaurya4u',
-      demo: null,
+      github: 'https://github.com/sanumaurya4u/E-CELL_UIET-MDU',
+      demo: 'https://ecellmdu.vercel.app',
       link: '/projects',
       year: '2026',
     },
@@ -41,8 +41,8 @@ export default function HomePage() {
       description:
         'Platform connecting farmers directly with consumers with product listing, real-time orders, and secure authentication.',
       topics: ['React', 'Node.js', 'Express.js', 'PostgreSQL'],
-      github: 'https://github.com/sanumaurya4u',
-      demo: null,
+      github: 'https://github.com/sanumaurya4u/Kisan-Direct',
+      demo: 'https://kisan-direct-omega.vercel.app/',
       link: '/projects',
       year: '2026',
     },
@@ -54,8 +54,8 @@ export default function HomePage() {
       description:
         'AI-powered web app using the Google Gemini API for intelligent content generation with a responsive UI.',
       topics: ['React', 'Gemini API', 'Tailwind CSS', 'AI Generation'],
-      github: 'https://github.com/sanumaurya4u',
-      demo: null,
+      github: 'https://github.com/sanumaurya4u/Magnus-AI',
+      demo: 'https://magnus4ai.vercel.app/learner',
       link: '/projects',
       year: '2026',
     },

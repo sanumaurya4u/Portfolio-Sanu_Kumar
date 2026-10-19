@@ -29,8 +29,8 @@ const RESUME_PROJECTS = [
     description:
       'Official website of the Entrepreneurship Cell that showcases events, team, and startup resources with high-performance animations.',
     language: 'TypeScript',
-    html_url: 'https://github.com/sanumaurya4u',
-    homepage: null,
+    html_url: 'https://github.com/sanumaurya4u/E-CELL_UIET-MDU',
+    homepage: 'https://ecellmdu.vercel.app',
     topics: ['nextjs', 'typescript', 'tailwind', 'supabase', 'gsap'],
   },
   {
@@ -43,8 +43,8 @@ const RESUME_PROJECTS = [
     description:
       'Platform connecting farmers directly with consumers with product listing, real-time orders, and secure authentication.',
     language: 'JavaScript',
-    html_url: 'https://github.com/sanumaurya4u',
-    homepage: null,
+    html_url: 'https://github.com/sanumaurya4u/Kisan-Direct',
+    homepage: 'https://kisan-direct-omega.vercel.app/',
     topics: ['react', 'nodejs', 'express', 'postgresql', 'rest-api'],
   },
   {
@@ -57,8 +57,8 @@ const RESUME_PROJECTS = [
     description:
       'AI-powered web app using the Google Gemini API for intelligent content generation with a clean, responsive UI.',
     language: 'JavaScript',
-    html_url: 'https://github.com/sanumaurya4u',
-    homepage: null,
+    html_url: 'https://github.com/sanumaurya4u/Magnus-AI',
+    homepage: 'https://magnus4ai.vercel.app/learner',
     topics: ['react', 'gemini-api', 'tailwind', 'ai-generation'],
   },
   {
@@ -98,8 +98,8 @@ const FALLBACK_REPOS = [
     description:
       'Official website of the Entrepreneurship Cell that showcases events, team, and startup resources built with Next.js, TypeScript, Supabase, and GSAP.',
     language: 'TypeScript',
-    html_url: `https://github.com/${GITHUB_USERNAME}`,
-    homepage: null,
+    html_url: 'https://github.com/sanumaurya4u/E-CELL_UIET-MDU',
+    homepage: 'https://ecellmdu.vercel.app',
     stars: 2,
     forks: 0,
     topics: ['nextjs', 'typescript', 'tailwind', 'supabase', 'gsap'],
@@ -111,8 +111,8 @@ const FALLBACK_REPOS = [
     description:
       'Platform connecting farmers directly with consumers with product listing, real-time orders, and secure authentication.',
     language: 'JavaScript',
-    html_url: `https://github.com/${GITHUB_USERNAME}`,
-    homepage: null,
+    html_url: 'https://github.com/sanumaurya4u/Kisan-Direct',
+    homepage: 'https://kisan-direct-omega.vercel.app/',
     stars: 1,
     forks: 0,
     topics: ['react', 'nodejs', 'express', 'postgresql'],
@@ -124,8 +124,8 @@ const FALLBACK_REPOS = [
     description:
       'AI-powered web app using the Google Gemini API for intelligent content generation with a clean, responsive UI.',
     language: 'JavaScript',
-    html_url: `https://github.com/${GITHUB_USERNAME}`,
-    homepage: null,
+    html_url: 'https://github.com/sanumaurya4u/Magnus-AI',
+    homepage: 'https://magnus4ai.vercel.app/learner',
     stars: 1,
     forks: 0,
     topics: ['react', 'gemini-api', 'tailwind', 'ai'],
@@ -211,6 +211,19 @@ const FALLBACK_REPOS = [
   },
 ];
 
+const KNOWN_HOMEPAGES = {
+  'campusconnect': 'https://campus-connect-smoky-rho.vercel.app',
+  'alphahometut': 'https://alphahometuition.app',
+  'jalgram_4_water-mang': 'https://jalgram.vercel.app',
+  'master_calc': 'https://master-calc.vercel.app',
+  'habit-flow': 'https://habit-flow-theta.vercel.app/',
+  'weather-app': 'https://aero-weather-eta.vercel.app',
+  'portfolio-sanu_kumar': 'https://sanumaurya.me',
+  'e-cell_uiet-mdu': 'https://ecellmdu.vercel.app',
+  'kisan-direct': 'https://kisan-direct-omega.vercel.app/',
+  'magnus-ai': 'https://magnus4ai.vercel.app/learner',
+};
+
 export default function ProjectsPage() {
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -230,7 +243,13 @@ export default function ProjectsPage() {
         const res = await fetch(url);
         const data = await res.json();
         if (data.success && data.repos && data.repos.length > 0) {
-          setRepos(data.repos.filter((r) => !r.fork));
+          const filtered = data.repos
+            .filter((r) => !r.fork && r.name.toLowerCase() !== GITHUB_USERNAME.toLowerCase())
+            .map((r) => ({
+              ...r,
+              homepage: r.homepage || KNOWN_HOMEPAGES[r.name.toLowerCase()] || null,
+            }));
+          setRepos(filtered);
           setDataSource(data.source || 'live');
           return;
         }
@@ -246,14 +265,14 @@ export default function ProjectsPage() {
         if (res.ok) {
           const directData = await res.json();
           const formatted = directData
-            .filter((r) => !r.fork)
+            .filter((r) => !r.fork && r.name.toLowerCase() !== GITHUB_USERNAME.toLowerCase())
             .map((r) => ({
               id: r.id.toString(),
               name: r.name,
               description: r.description || 'No description available',
               language: r.language || 'Code',
               html_url: r.html_url,
-              homepage: r.homepage || null,
+              homepage: r.homepage || KNOWN_HOMEPAGES[r.name.toLowerCase()] || null,
               stars: r.stargazers_count,
               forks: r.forks_count,
               topics: r.topics || [],

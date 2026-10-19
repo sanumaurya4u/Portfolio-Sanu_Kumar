@@ -42,14 +42,28 @@ const GITHUB_HEADERS = {
 let memoryCache = {};
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes (longer to avoid rate limits)
 
+const KNOWN_HOMEPAGES = {
+  'campusconnect': 'https://campus-connect-smoky-rho.vercel.app',
+  'alphahometut': 'https://alphahometuition.app',
+  'jalgram_4_water-mang': 'https://jalgram.vercel.app',
+  'master_calc': 'https://master-calc.vercel.app',
+  'habit-flow': 'https://habit-flow-theta.vercel.app/',
+  'weather-app': 'https://aero-weather-eta.vercel.app',
+  'portfolio-sanu_kumar': 'https://sanumaurya.me',
+  'e-cell_uiet-mdu': 'https://ecellmdu.vercel.app',
+  'kisan-direct': 'https://kisan-direct-omega.vercel.app/',
+  'magnus-ai': 'https://magnus4ai.vercel.app/learner',
+};
+
 function formatRepo(repo) {
+  const normName = (repo.name || '').toLowerCase();
   return {
     id: repo.id.toString(),
     name: repo.name,
     description: repo.description || 'No description available',
     language: repo.language || 'Unknown',
     html_url: repo.html_url,
-    homepage: repo.homepage || null,
+    homepage: repo.homepage || KNOWN_HOMEPAGES[normName] || null,
     stars: repo.stargazers_count,
     forks: repo.forks_count,
     watchers: repo.watchers_count || 0,
