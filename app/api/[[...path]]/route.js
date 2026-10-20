@@ -31,11 +31,23 @@ function corsHeaders() {
   };
 }
 
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME || 'sanumaurya4u';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+function getAuthHeader(token) {
+  if (!token) return undefined;
+  const trimmed = token.trim();
+  if (!trimmed) return undefined;
+  return trimmed.startsWith('github_pat_') || trimmed.startsWith('ghp_')
+    ? `Bearer ${trimmed}`
+    : `token ${trimmed}`;
+}
+
+const authHeader = getAuthHeader(GITHUB_TOKEN);
 const GITHUB_HEADERS = {
   'Accept': 'application/vnd.github.v3+json',
   'User-Agent': 'Portfolio-App',
-  ...(GITHUB_TOKEN ? { 'Authorization': `token ${GITHUB_TOKEN}` } : {})
+  ...(authHeader ? { 'Authorization': authHeader } : {})
 };
 
 // ===== In-memory cache (no MongoDB needed) =====
@@ -83,19 +95,23 @@ function formatRepo(repo) {
 async function handleGitHubRepos(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get('username') || 'sanumaurya4u';
+    const username = searchParams.get('username') || GITHUB_USERNAME;
     const forceRefresh = searchParams.get('refresh') === 'true';
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const perPage = Math.min(100, Math.max(1, parseInt(searchParams.get('per_page') || '100', 10)));
+    const cacheKey = `${username}_p${page}_pp${perPage}`;
 
     // Check in-memory cache first (no DB needed)
-    if (!forceRefresh && memoryCache[username]) {
-      const cacheAge = Date.now() - memoryCache[username].timestamp;
+    if (!forceRefresh && memoryCache[cacheKey]) {
+      const cacheAge = Date.now() - memoryCache[cacheKey].timestamp;
       if (cacheAge < CACHE_TTL_MS) {
         return NextResponse.json({
           success: true,
-          repos: memoryCache[username].repos,
-          profile: memoryCache[username].profile,
+          username,
+          repos: memoryCache[cacheKey].repos,
+          profile: memoryCache[cacheKey].profile,
           source: 'cache',
-          cached_at: memoryCache[username].cached_at,
+          cached_at: memoryCache[cacheKey].cached_at,
           cache_age_seconds: Math.floor(cacheAge / 1000)
         }, { headers: corsHeaders() });
       }
@@ -112,12 +128,12 @@ async function handleGitHubRepos(request) {
 
       const [profileRes, reposRes] = await Promise.all([
         fetch(`https://api.github.com/users/${username}`, fetchOptions),
-        fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30&type=owner`, fetchOptions)
+        fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=${perPage}&page=${page}&type=owner`, fetchOptions)
       ]);
 
       // If token is invalid or expired (401 Bad credentials), fallback to unauthenticated request
       if ((profileRes && profileRes.status === 401) || (reposRes && reposRes.status === 401)) {
-        console.warn('GitHub token rejected with 401 Unauthorized. Retrying with unauthenticated public request...');
+        console.warn('[GitHub API] GITHUB_TOKEN unauthorized (401). Retrying unauthenticated...');
         const publicHeaders = {
           'Accept': 'application/vnd.github.v3+json',
           'User-Agent': 'Portfolio-App'
@@ -128,12 +144,13 @@ async function handleGitHubRepos(request) {
 
         const [retryProfileRes, retryReposRes] = await Promise.all([
           fetch(`https://api.github.com/users/${username}`, publicOptions),
-          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=30&type=owner`, publicOptions)
+          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=${perPage}&page=${page}&type=owner`, publicOptions)
         ]);
 
         if (retryProfileRes.ok) {
           const p = await retryProfileRes.json();
           profileData = {
+            login: p.login || username,
             avatar_url: p.avatar_url,
             name: p.name || username,
             bio: p.bio || '',
@@ -155,6 +172,7 @@ async function handleGitHubRepos(request) {
         if (profileRes.ok) {
           const p = await profileRes.json();
           profileData = {
+            login: p.login || username,
             avatar_url: p.avatar_url,
             name: p.name || username,
             bio: p.bio || '',
@@ -190,12 +208,12 @@ async function handleGitHubRepos(request) {
         };
         const searchHeaders = GITHUB_TOKEN ? GITHUB_HEADERS : publicHeaders;
         let response = await fetch(
-          `https://api.github.com/search/repositories?q=user:${username}&sort=updated&per_page=30`,
+          `https://api.github.com/search/repositories?q=user:${username}&sort=updated&per_page=${perPage}&page=${page}`,
           { headers: searchHeaders, cache: 'no-store' }
         );
         if (response.status === 401) {
           response = await fetch(
-            `https://api.github.com/search/repositories?q=user:${username}&sort=updated&per_page=30`,
+            `https://api.github.com/search/repositories?q=user:${username}&sort=updated&per_page=${perPage}&page=${page}`,
             { headers: publicHeaders, cache: 'no-store' }
           );
         }
@@ -211,7 +229,7 @@ async function handleGitHubRepos(request) {
     // Got fresh data — cache it in memory and return
     if (formattedRepos) {
       const now = new Date().toISOString();
-      memoryCache[username] = {
+      memoryCache[cacheKey] = {
         repos: formattedRepos,
         profile: profileData,
         cached_at: now,
@@ -220,6 +238,7 @@ async function handleGitHubRepos(request) {
 
       return NextResponse.json({
         success: true,
+        username,
         repos: formattedRepos,
         profile: profileData,
         source: 'live',
@@ -228,18 +247,19 @@ async function handleGitHubRepos(request) {
     }
 
     // All APIs failed — serve stale memory cache if available
-    if (memoryCache[username]) {
+    if (memoryCache[cacheKey]) {
       return NextResponse.json({
         success: true,
-        repos: memoryCache[username].repos,
-        profile: memoryCache[username].profile,
+        username,
+        repos: memoryCache[cacheKey].repos,
+        profile: memoryCache[cacheKey].profile,
         source: 'stale_cache',
-        cached_at: memoryCache[username].cached_at
+        cached_at: memoryCache[cacheKey].cached_at
       }, { headers: corsHeaders() });
     }
 
     return NextResponse.json(
-      { success: false, error: 'GitHub API rate limited. Please try again in a few minutes.' },
+      { success: false, error: 'GitHub API rate limited or unavailable. Please try again shortly.' },
       { status: 429, headers: corsHeaders() }
     );
   } catch (error) {
